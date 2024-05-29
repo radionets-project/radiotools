@@ -23,10 +23,12 @@ class Layout:
             The path of the file to save the array layout to.
 
         fmt : str, optional
-            The layout format the output file is supposed to have (available: casa, pyvisgen) (default is pyvisgen).
+            The layout format the output file is supposed to have
+            (available: casa, pyvisgen) (default is pyvisgen).
 
         overwrite : bool, optional
-            Whether to overwrite the file if it already exists (default is False).
+            Whether to overwrite the file if it already exists
+            (default is False).
         """
 
         FORMATS = ["casa", "pyvisgen"]
@@ -91,6 +93,9 @@ class Layout:
         with open(file, "w", encoding="utf-8") as f:
             f.writelines(data)
 
+    def __str__(self):
+        return str(self.df)
+
     @classmethod
     def from_casa(cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0):
         """
@@ -103,19 +108,23 @@ class Layout:
 
         el_low : float or array_like, optional
             The minimal elevation in degrees the telescope can be adjusted to.
-            If provided as singular number all telescopes in the array will be assigned the same value.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
 
         el_high : float or array_like, optional
             The maximal elevation in degrees the telescope can be adjusted to.
-            If provided as singular number all telescopes in the array will be assigned the same value.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
 
         sefd : float or array_like, optional
             The system equivalent flux density of the telescope.
-            If provided as singular number all telescopes in the array will be assigned the same value.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
 
         altitude : float or array_like, optional
             The altitude of the telescope.
-            If provided as singular number all telescopes in the array will be assigned the same value.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
         """
 
         df = pd.read_csv(
@@ -140,10 +149,21 @@ class Layout:
         cls.z = df.iloc[:, 2].to_list()
         cls.dish_dia = df.iloc[:, 3].to_list()
         cls.names = df.iloc[:, 4].to_list()
-        cls.el_low = np.repeat(el_low, len(cls.x))
-        cls.el_high = np.repeat(el_high, len(cls.x))
-        cls.sefd = np.repeat(sefd, len(cls.x))
-        cls.altitude = np.repeat(altitude, len(cls.x))
+        cls.el_low = np.repeat(el_low, len(cls.x)) if np.isscalar(el_low) else el_low
+        cls.el_high = (
+            np.repeat(el_high, len(cls.x)) if np.isscalar(el_high) else el_high
+        )
+        cls.sefd = np.repeat(sefd, len(cls.x)) if np.isscalar(sefd) else sefd
+        cls.altitude = (
+            np.repeat(altitude, len(cls.x)) if np.isscalar(altitude) else altitude
+        )
+
+        df.insert(5, "el_low", cls.el_low)
+        df.insert(6, "el_high", cls.el_high)
+        df.insert(7, "sefd", cls.sefd)
+        df.insert(8, "altitude", cls.el_low)
+
+        cls.df = df
 
         return cls
 
@@ -186,5 +206,6 @@ class Layout:
         cls.el_high = df.iloc[:, 6].to_list()
         cls.sefd = df.iloc[:, 7].to_list()
         cls.altitude = df.iloc[:, 8].to_list()
+        cls.df = df
 
         return cls
