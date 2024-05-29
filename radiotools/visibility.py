@@ -1,15 +1,15 @@
 """Shows the source visibility at a given location and time."""
 
 import datetime
-import dateutil.parser
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import pandas as pd
-import numpy as np
 
 import astropy.units as u
+import dateutil.parser
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.time import Time
-from astropy.coordinates import EarthLocation, AltAz, SkyCoord
 
 from pyvisgen.layouts import layouts
 
