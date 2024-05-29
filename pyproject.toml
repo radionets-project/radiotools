@@ -7,7 +7,7 @@ name = "radiotools"
 description = "Tools for radio astronomy."
 readme = "README.rst"
 authors = [
-  {name = radionets-project developers}
+  {name = "radionets-project developers"}
 ]
 license = {text = "MIT"}
 classifiers = [
