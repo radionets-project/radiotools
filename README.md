@@ -6,5 +6,5 @@ You can install the necessary packages in a conda/mamba environment of your choi
 ```
 $ pip install -e .
 ```
-Note, that it is recommended to install [radionets](https://github.com/radionets-project/radionets)
+Note that it is recommended to install [radionets](https://github.com/radionets-project/radionets)
 and [pyvisgen](https://github.com/radionets-project/pyvisgen) first.
