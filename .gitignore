@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# version from setuptools
+radiotools/_version_cache.py
+radiotools/_version.py
+
 # C extensions
 *.so
 
