@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=64", "setuptools_scm[toml]>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -33,6 +33,7 @@ dependencies = [
   "matplotlib ~=3.0",
   "numpy ~=1.16",
   "pyvisgen",
+  "matplotlib",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +48,12 @@ all = [
 
 [project.urls]
 repository = "https://github.com/radionets-project/radiotools"
+
+[project.scripts]
+radiotools-info = "radiotools.info:main"
+
+[tool.setuptools_scm]
+write_to = "radiotools/_version.py"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -76,6 +83,3 @@ known-first-party = [
   "radiotools",
   "radionets"
 ]
-
-[project.scripts]
-radiotools-info = "radiotools.info:main"
