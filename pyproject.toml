@@ -41,11 +41,15 @@ dev = [
     "setuptools_scm[toml]",
 ]
 
+all = [
+  "radiotools[dev]"
+]
+
 [project.urls]
 repository = "https://github.com/radionets-project/radiotools"
 
 [tool.setuptools.packages.find]
-where = ["radiotools"]
+where = ["."]
 
 [tool.ruff]
 target-version = "py310"
@@ -72,3 +76,6 @@ known-first-party = [
   "radiotools",
   "radionets"
 ]
+
+[project.scripts]
+radiotools-info = "radiotools.info:main"
