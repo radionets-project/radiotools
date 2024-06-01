@@ -1,6 +1,7 @@
 """Shows the source visibility at a given location and time."""
 
 import datetime
+from collections import namedtuple
 
 import astropy.units as u
 import dateutil.parser
@@ -10,6 +11,8 @@ import numpy as np
 import pandas as pd
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.time import Time
+from rich.console import Console
+from rich.table import Table
 
 from pyvisgen.layouts import layouts
 
@@ -92,6 +95,11 @@ class SourceVisibility:
             raise ValueError("Please provide a valid location!")
 
         self.date = date
+
+        self._get_dates()
+        self._get_pos()
+
+        self.get_optimal_date()
 
     def _get_dates(self) -> None:
         """Creates a date range from the dates given
@@ -224,9 +232,6 @@ class SourceVisibility:
         -------
         tuple : Figure and axis objects.
         """
-        self._get_dates()
-        self._get_pos()
-
         if colors is None:
             colors = iter(COLORS)
         else:
@@ -267,3 +272,62 @@ class SourceVisibility:
         self._plot_config(ax)
 
         return fig, ax
+
+    def _time_delta(self, r1, r2):
+        latest_start = max(r1.start, r2.start)
+        earliest_end = min(r1.end, r2.end)
+
+        delta = earliest_end - latest_start
+
+        return max(0, delta)
+
+    def get_optimal_date(self):
+        times = dict()
+        t_range = namedtuple("t_range", ["start", "end"])
+
+        for key, val in self.source_pos.items():
+            maximum = np.max(val.alt)
+            if maximum > 85 * u.deg or maximum < 15 * u.deg:
+                continue
+            idx_max = np.argmax(val.alt)
+            delta = datetime.timedelta(hours=4)
+            times[key] = [
+                self.dates[idx_max] - delta,
+                self.dates[idx_max],
+                self.dates[idx_max] + delta,
+            ]
+
+        dt = np.zeros([len(times), len(times)])
+        for i, key_i in enumerate(times):
+            for j, key_j in enumerate(times):
+                r1 = t_range(
+                    start=times[key_i][0].to_datetime64(),
+                    end=times[key_i][-1].to_datetime64(),
+                )
+                r2 = t_range(
+                    start=times[key_j][0].to_datetime64(),
+                    end=times[key_j][-1].to_datetime64(),
+                )
+
+                dt[i, j] = self._time_delta(r1, r2)
+
+        result = times[np.argmax(dt.sum(axis=0))]
+
+        print("")
+        tab = Table(title="*** Best observation time***")
+        tab.add_column("Station ID", justify="right", style="cyan")
+        tab.add_column("Obs. time start")
+        tab.add_column("Obs. time midpoint")
+        tab.add_column("Obs. time end")
+
+        tab.add_row(
+            f"{np.argmax(dt.sum(axis=0))}",
+            result[0].strftime("%Y-%m-%d %H:%M:%S"),
+            result[1].strftime("%Y-%m-%d %H:%M:%S"),
+            result[2].strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        console = Console()
+        console.print(tab)
+        print("")
+
+        return result
