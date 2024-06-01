@@ -56,8 +56,8 @@ class SourceVisibility:
             should represent. Defaults to ICRS.
         """
         if isinstance(target, tuple):
-            self.ra = target[0].to(u.deg)
-            self.dec = target[1].to(u.deg)
+            self.ra = u.Quantity(target[0], unit=u.deg)
+            self.dec = u.Quantity(target[1], unit=u.deg)
             self.source = SkyCoord(self.ra, self.dec, frame=frame)
             self.target_name = None
 
