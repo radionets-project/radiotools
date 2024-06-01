@@ -1,7 +1,8 @@
 import sys
-from argparse import ArgumentParser
 
-__all__ = ["info"]
+import click
+
+__all__ = ["main"]
 
 _dependencies = sorted(
     [
@@ -14,22 +15,34 @@ _dependencies = sorted(
 )
 
 
-def main(args=None):
-    parser = ArgumentParser()
-
-    parser.add_argument("--version", action="store_true", help="Print version number")
-    parser.add_argument("--visibility", action="store_true")
-    parser.add_argument("--dependencies", action="store_true")
-
+@click.command()
+@click.option(
+    "--version",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Print version number",
+)
+@click.option(
+    "--dependencies",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Print dependencies",
+)
+@click.option(
+    "--visibility",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Show visibility",
+)
+def main(version, dependencies, visibility):
     if len(sys.argv) <= 1:
-        parser.print_help()
+        with click.get_current_context() as ctx:
+            click.echo(ctx.get_help())
         sys.exit(1)
 
-    args = parser.parse_args(args)
-    info(**vars(args))
-
-
-def info(version=False, visibility=False, dependencies=False):
     if version:
         _info_version()
 
@@ -62,14 +75,27 @@ def _visibility():
 
     from radiotools.visibility import SourceVisibility
 
-    target = input("Target (either coordinates [RA/Dec] or an ICRS name): ")
-    date = input("Date (YYYY-MM-DD HH:MM:SS): ")
-    location = input("Location (either an array layout or an existing location): ")
+    target = click.prompt(
+        "Target [ICRS name, leave empty to enter RA/Dec]",
+        type=str,
+        default="",
+        show_default=False,
+    )
+
+    if target == "" or target.isspace():
+        ra = click.prompt("Right ascension / deg", type=float)
+        dec = click.prompt("Declination / deg", type=float)
+        target = (ra, dec)
+
+    date = click.prompt("Date [YYYY-MM-DD HH:MM:SS]")
+    location = click.prompt("Location [array layout or an existing location]")
 
     vis = SourceVisibility(target=target, date=date, location=location)
-    fig, _ = vis.plot()
 
-    show(block=True)
+    plot = click.confirm("Plot visibility?", default=False)
+    if plot:
+        fig, _ = vis.plot()
+        show(block=True)
 
 
 if __name__ == "__main__":
