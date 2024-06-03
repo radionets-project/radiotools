@@ -40,7 +40,7 @@ class Layout:
                 file.unlink()
             else:
                 raise FileExistsError(
-                    f"The file {file} already exists! If you want to override it set overwrite=True!"
+                    f"The file {file} already exists! If you want to overwrite it set overwrite=True!"
                 )
 
         data = []
