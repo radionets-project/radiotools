@@ -40,6 +40,7 @@ class SourceVisibility:
         target: tuple or str,
         date: str or list[str],
         location: str or EarthLocation = None,
+        obs_length: float = 4.0,
         frame="icrs",
     ) -> None:
         """
@@ -54,6 +55,8 @@ class SourceVisibility:
             Name of an existing array layout included in pyvisgen,
             a location, or astropy `EarthLocation` object of an
             observatory or telescope.
+        obs_length: float
+            Observation length in hours.
         frame : str, optional, default='icrs'
             Type of coordinate frame the source sky coordinates
             should represent. Defaults to ICRS.
@@ -95,6 +98,7 @@ class SourceVisibility:
             raise ValueError("Please provide a valid location!")
 
         self.date = date
+        self.obs_length = obs_length
 
         self._get_dates()
         self._get_pos()
@@ -290,7 +294,7 @@ class SourceVisibility:
             if maximum > 85 * u.deg or maximum < 15 * u.deg:
                 continue
             idx_max = np.argmax(val.alt)
-            delta = datetime.timedelta(hours=4)
+            delta = datetime.timedelta(hours=self.obs_length / 2)
             times[key] = [
                 self.dates[idx_max] - delta,
                 self.dates[idx_max],

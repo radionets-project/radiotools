@@ -1,3 +1,4 @@
+import datetime
 import sys
 
 import click
@@ -87,10 +88,25 @@ def _visibility():
         dec = click.prompt("Declination / deg", type=float)
         target = (ra, dec)
 
-    date = click.prompt("Date [YYYY-MM-DD HH:MM:SS]")
+    date = click.prompt(
+        "Date [Format: YYYY-MM-DD HH:MM:SS; leave empty for current time]",
+        type=str,
+        default="",
+        show_default=False,
+    )
+
+    obs_length = click.prompt(
+        "Observation length [hours]", type=float, default=8.0, show_default=True
+    )
+
+    if date == "" or date.isspace():
+        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     location = click.prompt("Location [array layout or an existing location]")
 
-    vis = SourceVisibility(target=target, date=date, location=location)
+    vis = SourceVisibility(
+        target=target, date=date, location=location, obs_length=obs_length
+    )
 
     plot = click.confirm("Plot visibility?", default=False)
     if plot:
