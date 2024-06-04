@@ -33,7 +33,7 @@ dependencies = [
   "matplotlib ~=3.0",
   "numpy ~=1.16",
   "pyvisgen",
-  "matplotlib",
+  "rich",
 ]
 
 [project.optional-dependencies]
