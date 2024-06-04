@@ -50,7 +50,8 @@ all = [
 repository = "https://github.com/radionets-project/radiotools"
 
 [project.scripts]
-radiotools-utils = "radiotools.utils:main"
+radiotools-info = "radiotools.info:main"
+radiotools-vis = "radiotools.cli_tools.vis:main"
 
 [tool.setuptools_scm]
 write_to = "radiotools/_version.py"
