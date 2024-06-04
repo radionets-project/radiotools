@@ -318,7 +318,7 @@ class SourceVisibility:
         result = times[np.argmax(dt.sum(axis=0))]
 
         print("")
-        tab = Table(title="*** Best observation time***")
+        tab = Table(title="*** Best observation time ***")
         tab.add_column("Station ID", justify="right", style="cyan")
         tab.add_column("Obs. time start")
         tab.add_column("Obs. time midpoint")
