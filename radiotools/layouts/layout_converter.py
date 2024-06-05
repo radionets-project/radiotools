@@ -2,6 +2,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from astropy.coordinates import EarthLocation
+
+pd.options.display.float_format = "{:f}".format
 
 
 class Layout:
@@ -13,7 +16,7 @@ class Layout:
     def __init__(self):
         None
 
-    def save(self, path, fmt="pyvisgen", overwrite=False):
+    def save(self, path, fmt="pyvisgen", overwrite=False, rel_to_site=None):
         """
         Saves the layout to a layout file.
 
@@ -29,6 +32,12 @@ class Layout:
         overwrite : bool, optional
             Whether to overwrite the file if it already exists
             (default is False).
+
+        rel_to_site : str, optional
+            The name of the site the coordinates are supposed to be saved relative to.
+            Is ignored is `None` or empty or `fmt` is not set to 'pyvisgen'.
+            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
+
         """
 
         FORMATS = ["casa", "pyvisgen"]
@@ -52,37 +61,105 @@ class Layout:
                 )
 
                 for i in range(0, len(self.x)):
-                    row = map(
-                        str,
-                        [
-                            self.names[i],
-                            self.x[i],
-                            self.y[i],
-                            self.z[i],
-                            self.dish_dia[i],
-                            self.el_low[i],
-                            self.el_high[i],
-                            self.sefd[i],
-                            self.altitude[i],
-                        ],
-                    )
+                    if not (rel_to_site is None or rel_to_site == ""):
+                        location = EarthLocation.of_site(rel_to_site)
+
+                        already_relative = not (
+                            self.rel_to_site is None or self.rel_to_site == ""
+                        )
+
+                        if already_relative:
+                            prev_location = EarthLocation.of_site(self.rel_to_site)
+
+                        row = map(
+                            str,
+                            [
+                                self.names[i],
+                                self.x[i] - location.x.value
+                                if not already_relative
+                                else self.x[i]
+                                - location.x.value
+                                + prev_location.x.value,
+                                self.y[i] - location.y.value
+                                if not already_relative
+                                else self.y[i]
+                                - location.y.value
+                                + prev_location.y.value,
+                                self.z[i] - location.z.value
+                                if not already_relative
+                                else self.z[i]
+                                - location.z.value
+                                + prev_location.z.value,
+                                self.dish_dia[i],
+                                self.el_low[i],
+                                self.el_high[i],
+                                self.sefd[i],
+                                self.altitude[i],
+                            ],
+                        )
+                    else:
+                        already_relative = not (
+                            self.rel_to_site is None or self.rel_to_site == ""
+                        )
+
+                        if already_relative:
+                            prev_location = EarthLocation.of_site(self.rel_to_site)
+
+                        row = map(
+                            str,
+                            [
+                                self.names[i],
+                                self.x[i]
+                                if not already_relative
+                                else self.x[i] + prev_location.x.value,
+                                self.y[i]
+                                if not already_relative
+                                else self.y[i] + prev_location.y.value,
+                                self.z[i]
+                                if not already_relative
+                                else self.z[i] + prev_location.z.value,
+                                self.dish_dia[i],
+                                self.el_low[i],
+                                self.el_high[i],
+                                self.sefd[i],
+                                self.altitude[i],
+                            ],
+                        )
+
                     data.append("\t".join(row) + "\n")
 
             case "casa":
                 data.append("# X Y Z dish_dia station_name\n")
 
+                if not (rel_to_site is None or rel_to_site == ""):
+                    raise ValueError(
+                        "You attempted to save relative coordinates to a NRAO CASA layout, which is not possible because CASA uses absolute coordinates. You have to set the rel_to_site parameter to None or empty str!"
+                    )
+
                 for i in range(0, len(self.x)):
+                    already_relative = not (
+                        self.rel_to_site is None or self.rel_to_site == ""
+                    )
+
+                    if already_relative:
+                        prev_location = EarthLocation.of_site(self.rel_to_site)
+
                     row = map(
                         str,
                         [
-                            self.x[i],
-                            self.y[i],
-                            self.z[i],
+                            self.x[i]
+                            if not already_relative
+                            else self.x[i] + prev_location.x.value,
+                            self.y[i]
+                            if not already_relative
+                            else self.y[i] + prev_location.y.value,
+                            self.z[i]
+                            if not already_relative
+                            else self.z[i] + prev_location.z.value,
                             self.dish_dia[i],
                             self.names[i],
                         ],
                     )
-                    print(row)
                     data.append(" ".join(row) + "\n")
 
             case _:
@@ -94,7 +171,13 @@ class Layout:
             f.writelines(data)
 
     def __str__(self):
-        return str(self.df)
+        return f"Configuration file loaded from: {self.cfg_path}\nRelative to site: {self.rel_to_site}\n{self.df}"
+
+    def show(self):
+        """
+        Prints all information contained in the layout
+        """
+        print(self.__str__())
 
     @classmethod
     def from_casa(cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0):
@@ -125,6 +208,7 @@ class Layout:
             The altitude of the telescope.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+
         """
 
         df = pd.read_csv(
@@ -132,7 +216,6 @@ class Layout:
             delimiter="\s+",
             encoding="utf-8",
             skip_blank_lines=True,
-            skiprows=1,
             names=["x", "y", "z", "dish_dia", "station_name"],
             dtype={
                 "x": float,
@@ -144,6 +227,8 @@ class Layout:
             comment="#",
         )
         cls = cls()
+        cls.cfg_path = cfg_path
+        cls.rel_to_site = None
         cls.x = df.iloc[:, 0].to_list()
         cls.y = df.iloc[:, 1].to_list()
         cls.z = df.iloc[:, 2].to_list()
@@ -168,14 +253,19 @@ class Layout:
         return cls
 
     @classmethod
-    def from_pyvisgen(cls, cfg_path):
+    def from_pyvisgen(cls, cfg_path, rel_to_site=None):
         """
-        Import a layout from a NRAO CASA layout config.
+        Import a layout from a radionets CASA layout config.
 
         Parameters
         ----------
         cfg_path : str
             The path of the config file to import.
+
+        rel_to_site : str, optional
+            The name of the site the coordinates are relative to.
+            Is ignored is `None` or empty or `fmt`.
+            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
         """
 
         df = pd.read_csv(
@@ -198,6 +288,8 @@ class Layout:
         )
         cls = cls()
         cls.names = df.iloc[:, 0].to_list()
+        cls.cfg_path = cfg_path
+        cls.rel_to_site = rel_to_site
         cls.x = df.iloc[:, 1].to_list()
         cls.y = df.iloc[:, 2].to_list()
         cls.z = df.iloc[:, 3].to_list()
