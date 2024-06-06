@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy.coordinates import EarthLocation
@@ -15,6 +16,9 @@ class Layout:
 
     def __init__(self):
         None
+
+    def is_relative(self):
+        return not (self.rel_to_site is None or self.rel_to_site == "")
 
     def save(self, path, fmt="pyvisgen", overwrite=False, rel_to_site=None):
         """
@@ -64,11 +68,7 @@ class Layout:
                     if not (rel_to_site is None or rel_to_site == ""):
                         location = EarthLocation.of_site(rel_to_site)
 
-                        already_relative = not (
-                            self.rel_to_site is None or self.rel_to_site == ""
-                        )
-
-                        if already_relative:
+                        if self.is_relative():
                             prev_location = EarthLocation.of_site(self.rel_to_site)
 
                         row = map(
@@ -76,17 +76,17 @@ class Layout:
                             [
                                 self.names[i],
                                 self.x[i] - location.x.value
-                                if not already_relative
+                                if not self.is_relative()
                                 else self.x[i]
                                 - location.x.value
                                 + prev_location.x.value,
                                 self.y[i] - location.y.value
-                                if not already_relative
+                                if not self.is_relative()
                                 else self.y[i]
                                 - location.y.value
                                 + prev_location.y.value,
                                 self.z[i] - location.z.value
-                                if not already_relative
+                                if not self.is_relative()
                                 else self.z[i]
                                 - location.z.value
                                 + prev_location.z.value,
@@ -98,11 +98,7 @@ class Layout:
                             ],
                         )
                     else:
-                        already_relative = not (
-                            self.rel_to_site is None or self.rel_to_site == ""
-                        )
-
-                        if already_relative:
+                        if self.is_relative():
                             prev_location = EarthLocation.of_site(self.rel_to_site)
 
                         row = map(
@@ -110,13 +106,13 @@ class Layout:
                             [
                                 self.names[i],
                                 self.x[i]
-                                if not already_relative
+                                if not self.is_relative()
                                 else self.x[i] + prev_location.x.value,
                                 self.y[i]
-                                if not already_relative
+                                if not self.is_relative()
                                 else self.y[i] + prev_location.y.value,
                                 self.z[i]
-                                if not already_relative
+                                if not self.is_relative()
                                 else self.z[i] + prev_location.z.value,
                                 self.dish_dia[i],
                                 self.el_low[i],
@@ -133,28 +129,26 @@ class Layout:
 
                 if not (rel_to_site is None or rel_to_site == ""):
                     raise ValueError(
-                        "You attempted to save relative coordinates to a NRAO CASA layout, which is not possible because CASA uses absolute coordinates. You have to set the rel_to_site parameter to None or empty str!"
+                        "You attempted to save relative coordinates to a NRAO CASA "
+                        "layout, which is not possible because CASA uses absolute coordinates. "
+                        "You have to set the rel_to_site parameter to None or empty str!"
                     )
 
                 for i in range(0, len(self.x)):
-                    already_relative = not (
-                        self.rel_to_site is None or self.rel_to_site == ""
-                    )
-
-                    if already_relative:
+                    if self.is_relative():
                         prev_location = EarthLocation.of_site(self.rel_to_site)
 
                     row = map(
                         str,
                         [
                             self.x[i]
-                            if not already_relative
+                            if not self.is_relative()
                             else self.x[i] + prev_location.x.value,
                             self.y[i]
-                            if not already_relative
+                            if not self.is_relative()
                             else self.y[i] + prev_location.y.value,
                             self.z[i]
-                            if not already_relative
+                            if not self.is_relative()
                             else self.z[i] + prev_location.z.value,
                             self.dish_dia[i],
                             self.names[i],
@@ -173,11 +167,119 @@ class Layout:
     def __str__(self):
         return f"Configuration file loaded from: {self.cfg_path}\nRelative to site: {self.rel_to_site}\n{self.df}"
 
-    def show(self):
+    def display(self):
         """
         Prints all information contained in the layout
         """
         print(self.__str__())
+
+    def as_relative(self, rel_to_site):
+        """
+        Returns a copy of the current layout in relative coordinates.
+
+        Parameters
+        ----------
+        rel_to_site : str
+            The name of the site the coordinates are supposed to be relative to.
+            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
+
+        """
+
+        def gen_rng_file(increment=0):
+            return Path(
+                f"./temp_cfg_{np.random.default_rng().uniform(0,len(list(Path('.').glob('*'))) + increment)}.cfg"
+            )
+
+        temp_path = gen_rng_file()
+
+        i = 1
+        while temp_path.is_file():
+            temp_path = gen_rng_file(i)
+            i += 1
+
+        self.save(temp_path, rel_to_site=rel_to_site)
+        new_layout = Layout.from_pyvisgen(temp_path, rel_to_site=rel_to_site)
+
+        temp_path.unlink()
+        new_layout.cfg_path = self.cfg_path
+
+        return new_layout
+
+    def as_absolute(self):
+        """
+        Returns a copy of the current layout in absolute coordinates.
+        Requires the layout to be in relative coordinates.
+        """
+
+        if not self.is_relative():
+            raise TypeError(
+                "This layout is not saved in relative coordinates and can therefore "
+                "not be converted in absolute coordinates."
+            )
+
+        def gen_rng_file(increment=0):
+            return Path(
+                f"./temp_cfg_{np.random.default_rng().uniform(0,len(list(Path('.').glob('*'))) + increment)}.cfg"
+            )
+
+        temp_path = gen_rng_file()
+
+        i = 1
+        while temp_path.is_file():
+            temp_path = gen_rng_file(i)
+            i += 1
+
+        self.save(temp_path)
+        new_layout = Layout.from_pyvisgen(temp_path)
+
+        temp_path.unlink()
+        new_layout.cfg_path = self.cfg_path
+
+        return new_layout
+
+    def plot(self, save_to_file=""):
+        """
+        Generates a plot of the arrangement of the layout.
+
+        Parameters
+        ----------
+        save_to_file : str, optional
+            The name of the file the plot should be saved to.
+
+        """
+
+        if self.is_relative():
+            layout = self.as_absolute()
+        else:
+            layout = self
+
+        coords = EarthLocation.from_geocentric(
+            layout.x, layout.y, layout.z, unit="meter"
+        ).to_geodetic()
+
+        singular_alt = len(np.unique(layout.altitude)) == 1
+
+        options = {
+            "color": "#f54254" if singular_alt else None,
+            "cmap": "cividis" if not singular_alt else None,
+            "c": layout.altitude if not singular_alt else None,
+        }
+
+        fig, ax = plt.subplots(1, 1)
+
+        im = ax.scatter(coords.lon.deg, coords.lat.deg, **options)
+
+        if not singular_alt:
+            fig.colorbar(im, ax=ax, label="Altitude")
+
+        ax.set_xlabel("Longitude in deg")
+        ax.set_ylabel("Latitude in deg")
+        ax.set_title(f"Array Layout\n({layout.cfg_path.split('/')[-1]})")
+
+        if save_to_file != "":
+            fig.savefig(save_to_file)
+
+        return fig, ax
 
     @classmethod
     def from_casa(cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0):
@@ -246,7 +348,7 @@ class Layout:
         df.insert(5, "el_low", cls.el_low)
         df.insert(6, "el_high", cls.el_high)
         df.insert(7, "sefd", cls.sefd)
-        df.insert(8, "altitude", cls.el_low)
+        df.insert(8, "altitude", cls.altitude)
 
         cls.df = df
 
