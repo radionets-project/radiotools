@@ -253,10 +253,6 @@ class Layout:
         else:
             layout = self
 
-        coords = EarthLocation.from_geocentric(
-            layout.x, layout.y, layout.z, unit="meter"
-        ).to_geodetic()
-
         singular_alt = len(np.unique(layout.altitude)) == 1
 
         options = {
@@ -267,13 +263,13 @@ class Layout:
 
         fig, ax = plt.subplots(1, 1)
 
-        im = ax.scatter(coords.lon.deg, coords.lat.deg, **options)
+        im = ax.scatter(self.x, self.y, **options)
 
         if not singular_alt:
             fig.colorbar(im, ax=ax, label="Altitude")
 
-        ax.set_xlabel("Longitude in deg")
-        ax.set_ylabel("Latitude in deg")
+        ax.set_xlabel("Geocentric x in m")
+        ax.set_ylabel("Geocentric y in m")
         ax.set_title(f"Array Layout\n({layout.cfg_path.split('/')[-1]})")
 
         if save_to_file != "":
