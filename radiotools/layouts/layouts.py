@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -12,13 +13,183 @@ class Layout:
 
     """
     A tool to convert radio telescope array layout config files between different types.
+
     """
 
     def __init__(self):
         None
 
+    def get_baselines(self):
+        """
+        Returns an array containing the lengths of all baselines in meters.
+
+        """
+
+        loc = np.array([self.x, self.y]).T
+        baselines = np.array([])
+
+        i = 0
+        for vec1 in loc:
+            for vec2 in loc[i + 1 :]:
+                baselines = np.append(
+                    baselines,
+                    np.linalg.norm(np.reshape(vec1 - vec2, (2, 1)), ord=2, axis=0),
+                )
+            i += 1
+
+        return baselines
+
+    def get_max_resolution(self, frequency):
+        """
+        Returns the maximal resolution of the layout
+        at a given frequency in arcsec / px.
+
+        Parameters
+        ----------
+        frequency : float or array_like
+            The frequency at which the array is observing
+
+        """
+        return 3600 * 180 / np.pi * 3 * 1e8 / (frequency * np.max(self.get_baselines()))
+
+    def __str__(self):
+        output = f"Configuration file loaded from: {self.cfg_path}"
+        output += f"\nRelative to site: {self.rel_to_site}"
+        output += f"\nNumber of antennas: {len(self.x)}"
+        output += f"\nNumber of baselines: {np.sum([i for i in range(len(self.x))])}"
+        output += f"\nLongest baseline: {np.max(self.get_baselines())} m"
+        output += f"\nShortest baseline: {np.min(self.get_baselines())} m"
+        output += f"\n\n{self.df}"
+        return output
+
+    def display(self):
+        """
+        Prints all information contained in the layout
+
+        """
+        print(self.__str__())
+
     def is_relative(self):
         return not (self.rel_to_site is None or self.rel_to_site == "")
+
+    def as_relative(self, rel_to_site):
+        """
+        Returns a copy of the current layout in relative coordinates.
+
+        Parameters
+        ----------
+        rel_to_site : str
+            The name of the site the coordinates are supposed to be relative to.
+            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
+
+        """
+
+        def gen_rng_file(increment=0):
+            return Path(f"./temp_cfg_{uuid.uuid4()}.cfg")
+
+        temp_path = gen_rng_file()
+
+        i = 1
+        while temp_path.is_file():
+            temp_path = gen_rng_file(i)
+            i += 1
+
+        self.save(temp_path, rel_to_site=rel_to_site)
+        new_layout = Layout.from_pyvisgen(temp_path, rel_to_site=rel_to_site)
+
+        temp_path.unlink()
+        new_layout.cfg_path = self.cfg_path
+
+        return new_layout
+
+    def as_absolute(self):
+        """
+        Returns a copy of the current layout in absolute coordinates.
+        Requires the layout to be in relative coordinates.
+        """
+
+        if not self.is_relative():
+            raise TypeError(
+                "This layout is not saved in relative coordinates and can therefore "
+                "not be converted in absolute coordinates."
+            )
+
+        def gen_rng_file(increment=0):
+            return Path(f"./temp_cfg_{uuid.uuid4()}.cfg")
+
+        temp_path = gen_rng_file()
+
+        i = 1
+        while temp_path.is_file():
+            temp_path = gen_rng_file(i)
+            i += 1
+
+        self.save(temp_path)
+        new_layout = Layout.from_pyvisgen(temp_path)
+
+        temp_path.unlink()
+        new_layout.cfg_path = self.cfg_path
+
+        return new_layout
+
+    def plot(self, save_to_file="", annotate=False, limits=None):
+        """
+        Generates a plot of the arrangement of the layout.
+
+        Parameters
+        ----------
+        save_to_file : str, optional
+            The name of the file the plot should be saved to.
+
+        annotate : bool, optional
+            Whether to mark the stations with their respective names.
+
+        limits : tuple of tuples, optional
+            The x and y bounds (e.g. `((0,1), (0,1))`). Set tuple of one
+            axis (x or y) to None to only limit the other axis.
+
+        """
+
+        if self.is_relative():
+            layout = self.as_absolute()
+        else:
+            layout = self
+
+        singular_alt = len(np.unique(layout.altitude)) == 1
+
+        options = {
+            "color": "#f54254" if singular_alt else None,
+            "cmap": "cividis" if not singular_alt else None,
+            "c": layout.altitude if not singular_alt else None,
+        }
+
+        fig, ax = plt.subplots(1, 1)
+
+        im = ax.scatter(self.x, self.y, **options)
+
+        if limits:
+            if limits[0]:
+                ax.set(xlim=limits[0])
+            if limits[1]:
+                ax.set(ylim=limits[1])
+
+        if not singular_alt:
+            fig.colorbar(im, ax=ax, label="Altitude")
+
+        if annotate:
+            for index, row in self.df.iterrows():
+                ax.annotate(
+                    text=f"{row['station_name']}", xy=(row.x, row.y), fontsize=8
+                )
+
+        ax.set_xlabel("Geocentric x in m")
+        ax.set_ylabel("Geocentric y in m")
+        ax.set_title(f"Array Layout\n({layout.cfg_path.split('/')[-1]})")
+
+        if save_to_file != "":
+            fig.savefig(save_to_file)
+
+        return fig, ax
 
     def save(self, path, fmt="pyvisgen", overwrite=False, rel_to_site=None):
         """
@@ -164,119 +335,6 @@ class Layout:
         with open(file, "w", encoding="utf-8") as f:
             f.writelines(data)
 
-    def __str__(self):
-        return f"Configuration file loaded from: {self.cfg_path}\nRelative to site: {self.rel_to_site}\n{self.df}"
-
-    def display(self):
-        """
-        Prints all information contained in the layout
-        """
-        print(self.__str__())
-
-    def as_relative(self, rel_to_site):
-        """
-        Returns a copy of the current layout in relative coordinates.
-
-        Parameters
-        ----------
-        rel_to_site : str
-            The name of the site the coordinates are supposed to be relative to.
-            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
-
-        """
-
-        def gen_rng_file(increment=0):
-            return Path(
-                f"./temp_cfg_{np.random.default_rng().uniform(0,len(list(Path('.').glob('*'))) + increment)}.cfg"
-            )
-
-        temp_path = gen_rng_file()
-
-        i = 1
-        while temp_path.is_file():
-            temp_path = gen_rng_file(i)
-            i += 1
-
-        self.save(temp_path, rel_to_site=rel_to_site)
-        new_layout = Layout.from_pyvisgen(temp_path, rel_to_site=rel_to_site)
-
-        temp_path.unlink()
-        new_layout.cfg_path = self.cfg_path
-
-        return new_layout
-
-    def as_absolute(self):
-        """
-        Returns a copy of the current layout in absolute coordinates.
-        Requires the layout to be in relative coordinates.
-        """
-
-        if not self.is_relative():
-            raise TypeError(
-                "This layout is not saved in relative coordinates and can therefore "
-                "not be converted in absolute coordinates."
-            )
-
-        def gen_rng_file(increment=0):
-            return Path(
-                f"./temp_cfg_{np.random.default_rng().uniform(0,len(list(Path('.').glob('*'))) + increment)}.cfg"
-            )
-
-        temp_path = gen_rng_file()
-
-        i = 1
-        while temp_path.is_file():
-            temp_path = gen_rng_file(i)
-            i += 1
-
-        self.save(temp_path)
-        new_layout = Layout.from_pyvisgen(temp_path)
-
-        temp_path.unlink()
-        new_layout.cfg_path = self.cfg_path
-
-        return new_layout
-
-    def plot(self, save_to_file=""):
-        """
-        Generates a plot of the arrangement of the layout.
-
-        Parameters
-        ----------
-        save_to_file : str, optional
-            The name of the file the plot should be saved to.
-
-        """
-
-        if self.is_relative():
-            layout = self.as_absolute()
-        else:
-            layout = self
-
-        singular_alt = len(np.unique(layout.altitude)) == 1
-
-        options = {
-            "color": "#f54254" if singular_alt else None,
-            "cmap": "cividis" if not singular_alt else None,
-            "c": layout.altitude if not singular_alt else None,
-        }
-
-        fig, ax = plt.subplots(1, 1)
-
-        im = ax.scatter(self.x, self.y, **options)
-
-        if not singular_alt:
-            fig.colorbar(im, ax=ax, label="Altitude")
-
-        ax.set_xlabel("Geocentric x in m")
-        ax.set_ylabel("Geocentric y in m")
-        ax.set_title(f"Array Layout\n({layout.cfg_path.split('/')[-1]})")
-
-        if save_to_file != "":
-            fig.savefig(save_to_file)
-
-        return fig, ax
-
     @classmethod
     def from_casa(cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0):
         """
@@ -371,7 +429,6 @@ class Layout:
             delimiter="\s+",
             encoding="utf-8",
             skip_blank_lines=True,
-            skiprows=1,
             dtype={
                 "station_name": str,
                 "x": float,
@@ -384,6 +441,7 @@ class Layout:
                 "altitude": float,
             },
         )
+        df = df.rename(columns={"X": "x", "Y": "y", "Z": "z"})
         cls = cls()
         cls.names = df.iloc[:, 0].to_list()
         cls.cfg_path = cfg_path
