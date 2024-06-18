@@ -293,7 +293,7 @@ class Layout:
                             ],
                         )
 
-                    data.append("\t".join(row) + "\n")
+                    data.append(" ".join(row) + "\n")
 
             case "casa":
                 data.append("# X Y Z dish_dia station_name\n")
@@ -336,7 +336,7 @@ class Layout:
             f.writelines(data)
 
     @classmethod
-    def from_casa(cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0):
+    def from_casa(cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0, rel_to_site=None):
         """
         Import a layout from a NRAO CASA layout config.
 
@@ -364,6 +364,11 @@ class Layout:
             The altitude of the telescope.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+            
+        rel_to_site : str, optional
+            The name of the site the coordinates are relative to.
+            Is ignored is `None` or empty or `fmt`.
+            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
 
         """
 
@@ -384,7 +389,7 @@ class Layout:
         )
         cls = cls()
         cls.cfg_path = cfg_path
-        cls.rel_to_site = None
+        cls.rel_to_site = rel_to_site        
         cls.x = df.iloc[:, 0].to_list()
         cls.y = df.iloc[:, 1].to_list()
         cls.z = df.iloc[:, 2].to_list()
@@ -398,7 +403,7 @@ class Layout:
         cls.altitude = (
             np.repeat(altitude, len(cls.x)) if np.isscalar(altitude) else altitude
         )
-
+        
         df.insert(5, "el_low", cls.el_low)
         df.insert(6, "el_high", cls.el_high)
         df.insert(7, "sefd", cls.sefd)
@@ -411,7 +416,7 @@ class Layout:
     @classmethod
     def from_pyvisgen(cls, cfg_path, rel_to_site=None):
         """
-        Import a layout from a radionets CASA layout config.
+        Import a layout from a radionets pyvisgen layout config.
 
         Parameters
         ----------
