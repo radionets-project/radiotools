@@ -12,3 +12,5 @@ via
 ```
 $ pip install https://github.com/radionets-project/pyvisgen/archive/gpu.zip
 ```
+
+If you want to use features from the NRAO CASAtools package, you must use a python 3.10 version.
