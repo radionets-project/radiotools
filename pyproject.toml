@@ -7,9 +7,9 @@ name = "radiotools"
 description = "Tools for radio astronomy."
 readme = "README.rst"
 authors = [
-  {name = "radionets-project developers"}
+    { name = "radionets-project developers" }
 ]
-license = {text = "MIT"}
+license = { text = "MIT" }
 classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
@@ -29,11 +29,13 @@ dynamic = ["version"]
 requires-python = ">=3.10"
 
 dependencies = [
-  "astropy >=6.1.0",
-  "matplotlib ~=3.0",
-  "numpy ~=1.16",
-  "pyvisgen",
-  "rich",
+    "astropy >=6.1.0",
+    "matplotlib ~=3.0",
+    "numpy ~=1.16",
+    "pandas",
+    "pyvisgen",
+    "rich",
+    "casatools",
 ]
 
 [project.optional-dependencies]
@@ -43,7 +45,7 @@ dev = [
 ]
 
 all = [
-  "radiotools[dev]"
+    "radiotools[dev]"
 ]
 
 [project.urls]
@@ -65,7 +67,7 @@ line-length = 88
 
 [tool.ruff.lint]
 extend-select = [
-    "I",  # isort
+    "I", # isort
 ]
 ignore = []
 
@@ -80,7 +82,7 @@ skip-magic-trailing-comma = false
 
 [tool.ruff.lint.isort]
 known-first-party = [
-  "pyvisgen",
-  "radiotools",
-  "radionets"
+    "pyvisgen",
+    "radiotools",
+    "radionets"
 ]

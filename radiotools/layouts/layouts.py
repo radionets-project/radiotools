@@ -84,15 +84,13 @@ class Layout:
 
         """
 
-        def gen_rng_file(increment=0):
+        def gen_rng_file():
             return Path(f"./temp_cfg_{uuid.uuid4()}.cfg")
 
         temp_path = gen_rng_file()
 
-        i = 1
         while temp_path.is_file():
-            temp_path = gen_rng_file(i)
-            i += 1
+            temp_path = gen_rng_file()
 
         self.save(temp_path, rel_to_site=rel_to_site)
         new_layout = Layout.from_pyvisgen(temp_path, rel_to_site=rel_to_site)
