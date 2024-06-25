@@ -1,9 +1,9 @@
 import shutil
 import uuid
 import warnings
+from datetime import datetime
 from pathlib import Path
 
-import pandas as pd
 from astropy.io import fits
 from casatools import ms as MeasurementTool
 
@@ -13,64 +13,15 @@ class Measurement:
     A tool to convert between FITS files and NRAO CASA measurement sets
     """
 
-    class ObservationTime:
-
-        """
-        A subclass to format and offset the start time of an observation
-
-        Parameters
-        ----------
-        time: pandas.datetime
-        The start time as a pandas datetime object
-        """
-
-        def __init__(self, time):
-            self._obs_time = time
-
-        """
-            Formats the Observation time as a string
-
-            Parameters
-            ----------
-            fmt: str, optional
-            The format of the ObservationTime (e.g. `%d-%m-%Y %H:%M:%S`)
-        """
-
-        def format(self, fmt="%d-%m-%Y %H:%M:%S"):
-            return self._obs_time.strftime(fmt)
-
-        """
-            Returns a copy of the current time with a given offset
-
-            Parameters
-            ----------
-            hours: int, optional
-            The hour offset
-
-            minutes: int, optional
-            The minute offset
-
-            seconds: int, optional
-            The second offset
-        """
-
-        def offset(self, hours=0, minutes=0, seconds=0):
-            return Measurement.ObservationTime(
-                self._obs_time
-                + pd.Timedelta(hours=hours, minutes=minutes, seconds=seconds)
-            )
-
     def __init__(self):
         None
 
     """
-        Returns the time at which the Observation was started.
+        Returns the datetime at which the Observation was started.
     """
 
     def get_obs_time(self):
-        return Measurement.ObservationTime(
-            pd.to_datetime(self.get_fits()[0].header["DATE-OBS"])
-        )
+        return datetime.fromisoformat(self.get_fits()[0].header["DATE-OBS"])
 
     """
            Saves the current measurement
