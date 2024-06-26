@@ -16,28 +16,28 @@ class Measurement:
     def __init__(self):
         None
 
-    """
-        Returns the datetime at which the Observation was started.
-    """
-
     def get_obs_time(self):
+        """
+        Returns the datetime at which the Observation was started.
+        """
+
         return datetime.fromisoformat(self.get_fits()[0].header["DATE-OBS"])
 
-    """
-           Saves the current measurement
-           If the Measurement was not not created using a CASA measurement set,
-           this will raise an exception.
-
-           Parameters
-           ----------
-           path: str
-           The path of the root of the measurement set
-
-           overwrite: bool, optional
-           Whether an existing measurement set should be overwritten.
-    """
-
     def save_as_ms(self, path, overwrite=False):
+        """
+        Saves the current measurement
+        If the Measurement was not not created using a CASA measurement set,
+        this will raise an exception.
+
+        Parameters
+        ----------
+        path: str
+        The path of the root of the measurement set
+
+        overwrite: bool, optional
+        Whether an existing measurement set should be overwritten.
+        """
+
         root = Path(path)
 
         if root.exists():
@@ -52,21 +52,21 @@ class Measurement:
             ms = MeasurementTool()
             ms.fromfits(msfile=path, fitsfile=self._fits_path, nomodify=not overwrite)
 
-    """
-               Saves the current measurement as a FITS file
-               If the Measurement was not not created using a FITS file,
-               this will raise an exception.
-
-               Parameters
-               ----------
-               path: str
-               The path of the FITS file
-
-               overwrite: bool, optional
-               Whether an existing FITS file should be overwritten.
-    """
-
     def save_as_fits(self, path, overwrite=False):
+        """
+        Saves the current measurement as a FITS file
+        If the Measurement was not not created using a FITS file,
+        this will raise an exception.
+
+        Parameters
+        ----------
+        path: str
+        The path of the FITS file
+
+        overwrite: bool, optional
+        Whether an existing FITS file should be overwritten.
+        """
+
         file = Path(path)
 
         if file.is_file():
@@ -80,15 +80,15 @@ class Measurement:
         if not file.is_file() or overwrite:
             self._ms.tofits(path, overwrite=overwrite)
 
-    """
-            Returns a copy of the current measurement as a NRAO CASA measurement set.
-            There will be no permanent physical version of the measurement on the disk.
-            If the Measurement was not not created using a FITS file,
-            this will try to return a measurement set saved in this Measurement.
-            If no measurement set is present, this will raise an exception.
-    """
-
     def get_ms(self):
+        """
+        Returns a copy of the current measurement as a NRAO CASA measurement set.
+        There will be no permanent physical version of the measurement on the disk.
+        If the Measurement was not created using a FITS file,
+        this will try to return a measurement set saved in this Measurement.
+        If no measurement set is present, this will raise an exception.
+        """
+
         if not hasattr(self, "_fits_path"):
             return self._ms
 
@@ -135,17 +135,17 @@ class Measurement:
 
         return _fits
 
-    """
+    @classmethod
+    def from_fits(cls, fits_path):
+        """
         Creates a Measurement from a FITS file
 
         Parameters
         ----------
         fits_path: str
         The path to the FITS file
-    """
+        """
 
-    @classmethod
-    def from_fits(cls, fits_path):
         cls = cls()
         cls._fits_path = fits_path
 
@@ -153,18 +153,18 @@ class Measurement:
 
         return cls
 
-    """
-    Creates a Measurement from a NRAO CASA measurement set
-
-    Parameters
-    ----------
-    ms_path: str
-    The path to the root of the measurement set
-
-    """
-
     @classmethod
     def from_ms(cls, ms_path):
+        """
+        Creates a Measurement from a NRAO CASA measurement set
+
+        Parameters
+        ----------
+        ms_path: str
+        The path to the root of the measurement set
+
+        """
+
         cls = cls()
 
         ms = MeasurementTool()

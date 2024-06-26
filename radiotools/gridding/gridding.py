@@ -10,39 +10,10 @@ from scipy.constants import c
 class Gridder:
     """
     A tool to grid and plot raw radio interferometric measurements
-
     """
 
     def __init__(self):
         None
-
-    """
-    Creates plots of the UV coverage of the measurement and plots its dirty image
-
-    Parameters
-    ----------
-    uv_crop: tuple of array_like, optional
-    The part of the UV coverage to display. Has to be a tuple of the bounds (x_bounds, y_bounds).
-
-    uv_exp: float, optional
-    The exponent of the UV coverage, e.g. for better visibility
-
-    uv_norm: matplotlib.colors.norm, optional
-    The norm to apply to the plot of the UV coverage, e.g. matplotlib.colors.LogNorm
-
-    di_crop: tuple of array_like, optional
-    The part of the dirty image to display. Has to be a tuple of the bounds (x_bounds, y_bounds).
-
-    di_exp: float, optional
-    The exponent of the dirty image, e.g. for better visibility
-
-    uv_norm: matplotlib.colors.norm, optional
-    The norm to apply to the plot of the dirty image, e.g. matplotlib.colors.LogNorm
-
-    fig_size: array_like, optional
-    The size of the plots
-
-    """
 
     def plot(
         self,
@@ -54,6 +25,34 @@ class Gridder:
         di_norm=None,
         figsize=[20, 10],
     ):
+        """
+        Creates plots of the UV coverage of the measurement and plots its dirty image
+
+        Parameters
+        ----------
+        uv_crop: tuple of array_like, optional
+        The part of the UV coverage to display. Has to be a tuple of the bounds (x_bounds, y_bounds).
+
+        uv_exp: float, optional
+        The exponent of the UV coverage, e.g. for better visibility
+
+        uv_norm: matplotlib.colors.norm, optional
+        The norm to apply to the plot of the UV coverage, e.g. matplotlib.colors.LogNorm
+
+        di_crop: tuple of array_like, optional
+        The part of the dirty image to display. Has to be a tuple of the bounds (x_bounds, y_bounds).
+
+        di_exp: float, optional
+        The exponent of the dirty image, e.g. for better visibility
+
+        uv_norm: matplotlib.colors.norm, optional
+        The norm to apply to the plot of the dirty image, e.g. matplotlib.colors.LogNorm
+
+        figsize: array_like, optional
+        The size of the plots
+
+        """
+
         plt.rcParams["figure.figsize"] = figsize
 
         fig, ax = plt.subplots(1, 2, layout="constrained")
@@ -76,25 +75,27 @@ class Gridder:
 
         return fig, ax
 
-    """
-    Internal method to calculate the mask (UV coverage) and the dirty image
-
-    Parameters
-    ----------
-    uu: array_like
-    The U baseline coordinates in meters
-
-    vv: array_like
-    The U baseline coordinates in meters
-
-    stokes_i: array_like
-    The Stokes I parameters of the measurement
-
-    """
-
     def _create_attributes(self, uu, vv, stokes_i):
+        """
+        Internal method to calculate the mask (UV coverage) and the dirty image
+
+        Parameters
+        ----------
+        uu: array_like
+        The U baseline coordinates in meters
+
+        vv: array_like
+        The U baseline coordinates in meters
+
+        stokes_i: array_like
+        The Stokes I parameters of the measurement
+
+        """
+
         u = uu * self.freq / c
         v = vv * self.freq / c
+
+        stokes_i = stokes_i[:, 0]
 
         real = stokes_i.real.T
         imag = stokes_i.imag.T
@@ -141,24 +142,24 @@ class Gridder:
         )[:, ::-1]
         return self
 
-    """
-    Initializes the Gridder with a measurement which is saved in a FITS file
-
-    Parameters
-    ----------
-    fits_path: str
-    The path of the FITS file
-
-    img_size: int
-    The pixel size of the image
-
-    fov: float
-    The field of view (pixel size * image size) of the image in arcseconds
-
-    """
-
     @classmethod
     def from_fits(cls, fits_path, img_size, fov):
+        """
+        Initializes the Gridder with a measurement which is saved in a FITS file
+
+        Parameters
+        ----------
+        fits_path: str
+        The path of the FITS file
+
+        img_size: int
+        The pixel size of the image
+
+        fov: float
+        The field of view (pixel size * image size) of the image in arcseconds
+
+        """
+
         path = Path(fits_path)
 
         if not path.is_file():
@@ -190,24 +191,24 @@ class Gridder:
 
         return cls._create_attributes(uu, vv, stokes_i)
 
-    """
-    Initializes the Gridder with a measurement which is saved in a NRAO CASA measurement set
-
-    Parameters
-    ----------
-    ms_path: str
-    The path of the measurement set directory
-
-    img_size: int
-    The pixel size of the image
-
-    fov: float
-    The field of view (pixel size * image size) of the image in arcseconds
-
-    """
-
     @classmethod
     def from_ms(cls, ms_path, img_size, fov):
+        """
+        Initializes the Gridder with a measurement which is saved in a NRAO CASA measurement set
+
+        Parameters
+        ----------
+        ms_path: str
+        The path of the measurement set directory
+
+        img_size: int
+        The pixel size of the image
+
+        fov: float
+        The field of view (pixel size * image size) of the image in arcseconds
+
+        """
+
         if ms_path[-1] != "/":
             ms_path += "/"
 
@@ -226,8 +227,11 @@ class Gridder:
         data = table(ms_path).getcol("DATA").T
 
         uvw = table(ms_path).getcol("UVW").T
+        print(uvw.shape)
+        print(data.shape)
 
         cls.freq = table(ms_path + "SPECTRAL_WINDOW").getcol("CHAN_FREQ").T
+        # cls.freq = 231.94301484300001e9
 
         uvw = np.repeat(uvw[None], 1, axis=0)
         uu = uvw[:, :, 0]

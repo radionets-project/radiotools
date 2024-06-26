@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy.coordinates import EarthLocation
+from casatools import measures
 
 pd.options.display.float_format = "{:f}".format
+measures = measures()
 
 
 class Layout:
-
     """
     A tool to convert radio telescope array layout config files between different types.
 
@@ -52,6 +53,21 @@ class Layout:
         """
         return 3600 * 180 / np.pi * 3 * 1e8 / (frequency * np.max(self.get_baselines()))
 
+    def get_dataframe(self):
+        return pd.DataFrame(
+            data={
+                "x": self.x,
+                "y": self.y,
+                "z": self.z,
+                "dish_dia": self.dish_dia,
+                "station_name": self.names,
+                "el_low": self.el_low,
+                "el_high": self.el_high,
+                "sefd": self.sefd,
+                "altitude": self.altitude,
+            }
+        )
+
     def __str__(self):
         output = f"Configuration file loaded from: {self.cfg_path}"
         output += f"\nRelative to site: {self.rel_to_site}"
@@ -59,7 +75,7 @@ class Layout:
         output += f"\nNumber of baselines: {np.sum([i for i in range(len(self.x))])}"
         output += f"\nLongest baseline: {np.max(self.get_baselines())} m"
         output += f"\nShortest baseline: {np.min(self.get_baselines())} m"
-        output += f"\n\n{self.df}"
+        output += f"\n\n{self.get_dataframe()}"
         return output
 
     def display(self):
@@ -163,7 +179,7 @@ class Layout:
 
         fig, ax = plt.subplots(1, 1)
 
-        im = ax.scatter(self.x, self.y, **options)
+        im = ax.scatter(layout.x, layout.y, **options)
 
         if limits:
             if limits[0]:
@@ -183,6 +199,7 @@ class Layout:
         ax.set_xlabel("Geocentric x in m")
         ax.set_ylabel("Geocentric y in m")
         ax.set_title(f"Array Layout\n({layout.cfg_path.split('/')[-1]})")
+        ax.set_box_aspect(1)
 
         if save_to_file != "":
             fig.savefig(save_to_file)
@@ -227,6 +244,49 @@ class Layout:
 
         data = []
 
+        save_relative = not (rel_to_site is None or rel_to_site == "")
+
+        nx, ny, nz = self.x, self.y, self.z
+
+        if save_relative:
+            # Is supposed to saved be in relative (local tangent plane) coordinates
+
+            # location = EarthLocation.of_site(rel_to_site)
+            location = prev_location = Observatory.from_name(rel_to_site)
+
+            if self.is_relative():
+                # ... and is already relative --> reconvert to absolute (if not same site)
+                # prev_location = EarthLocation.of_site(self.rel_to_site)
+                prev_location = Observatory.from_name(self.rel_to_site)
+                nx, ny, nz = itrf2loc(
+                    *loc2itrf(
+                        prev_location.x.value,
+                        prev_location.y.value,
+                        prev_location.z.value,
+                        self.x,
+                        self.y,
+                        self.z,
+                    ),
+                    location.x.value,
+                    location.y.value,
+                    location.z.value,
+                )
+        else:
+            # Is supposed to be saved in absolute (geocentric) coordinates
+
+            if self.is_relative():
+                # ... but is relative --> convert to absolute
+                # prev_location = EarthLocation.of_site(self.rel_to_site)
+                prev_location = Observatory.from_name(self.rel_to_site)
+                nx, ny, nz = loc2itrf(
+                    prev_location.x.value,
+                    prev_location.y.value,
+                    prev_location.z.value,
+                    self.x,
+                    self.y,
+                    self.z,
+                )
+
         match fmt:
             case "pyvisgen":
                 data.append(
@@ -234,91 +294,36 @@ class Layout:
                 )
 
                 for i in range(0, len(self.x)):
-                    if not (rel_to_site is None or rel_to_site == ""):
-                        location = EarthLocation.of_site(rel_to_site)
-
-                        if self.is_relative():
-                            prev_location = EarthLocation.of_site(self.rel_to_site)
-
-                        row = map(
-                            str,
-                            [
-                                self.names[i],
-                                self.x[i] - location.x.value
-                                if not self.is_relative()
-                                else self.x[i]
-                                - location.x.value
-                                + prev_location.x.value,
-                                self.y[i] - location.y.value
-                                if not self.is_relative()
-                                else self.y[i]
-                                - location.y.value
-                                + prev_location.y.value,
-                                self.z[i] - location.z.value
-                                if not self.is_relative()
-                                else self.z[i]
-                                - location.z.value
-                                + prev_location.z.value,
-                                self.dish_dia[i],
-                                self.el_low[i],
-                                self.el_high[i],
-                                self.sefd[i],
-                                self.altitude[i],
-                            ],
-                        )
-                    else:
-                        if self.is_relative():
-                            prev_location = EarthLocation.of_site(self.rel_to_site)
-
-                        row = map(
-                            str,
-                            [
-                                self.names[i],
-                                self.x[i]
-                                if not self.is_relative()
-                                else self.x[i] + prev_location.x.value,
-                                self.y[i]
-                                if not self.is_relative()
-                                else self.y[i] + prev_location.y.value,
-                                self.z[i]
-                                if not self.is_relative()
-                                else self.z[i] + prev_location.z.value,
-                                self.dish_dia[i],
-                                self.el_low[i],
-                                self.el_high[i],
-                                self.sefd[i],
-                                self.altitude[i],
-                            ],
-                        )
-
-                    data.append(" ".join(row) + "\n")
-
-            case "casa":
-                data.append("# X Y Z dish_dia station_name\n")
-
-                if not (rel_to_site is None or rel_to_site == ""):
-                    raise ValueError(
-                        "You attempted to save relative coordinates to a NRAO CASA "
-                        "layout, which is not possible because CASA uses absolute coordinates. "
-                        "You have to set the rel_to_site parameter to None or empty str!"
-                    )
-
-                for i in range(0, len(self.x)):
-                    if self.is_relative():
-                        prev_location = EarthLocation.of_site(self.rel_to_site)
-
                     row = map(
                         str,
                         [
-                            self.x[i]
-                            if not self.is_relative()
-                            else self.x[i] + prev_location.x.value,
-                            self.y[i]
-                            if not self.is_relative()
-                            else self.y[i] + prev_location.y.value,
-                            self.z[i]
-                            if not self.is_relative()
-                            else self.z[i] + prev_location.z.value,
+                            self.names[i],
+                            nx[i],
+                            ny[i],
+                            nz[i],
+                            self.dish_dia[i],
+                            self.el_low[i],
+                            self.el_high[i],
+                            self.sefd[i],
+                            self.altitude[i],
+                        ],
+                    )
+                    data.append(" ".join(row) + "\n")
+
+            case "casa":
+                if save_relative:
+                    data.append(f"observatory={rel_to_site}")
+                    data.append("coordsys=LOC (local tangent plane)")
+
+                data.append("# X Y Z dish_dia station_name\n")
+
+                for i in range(0, len(self.x)):
+                    row = map(
+                        str,
+                        [
+                            nx[i],
+                            ny[i],
+                            nz[i],
                             self.dish_dia[i],
                             self.names[i],
                         ],
@@ -334,7 +339,9 @@ class Layout:
             f.writelines(data)
 
     @classmethod
-    def from_casa(cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0, rel_to_site=None):
+    def from_casa(
+        cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0, rel_to_site=None
+    ):
         """
         Import a layout from a NRAO CASA layout config.
 
@@ -362,7 +369,7 @@ class Layout:
             The altitude of the telescope.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
-            
+
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored is `None` or empty or `fmt`.
@@ -387,7 +394,7 @@ class Layout:
         )
         cls = cls()
         cls.cfg_path = cfg_path
-        cls.rel_to_site = rel_to_site        
+        cls.rel_to_site = rel_to_site
         cls.x = df.iloc[:, 0].to_list()
         cls.y = df.iloc[:, 1].to_list()
         cls.z = df.iloc[:, 2].to_list()
@@ -401,13 +408,11 @@ class Layout:
         cls.altitude = (
             np.repeat(altitude, len(cls.x)) if np.isscalar(altitude) else altitude
         )
-        
+
         df.insert(5, "el_low", cls.el_low)
         df.insert(6, "el_high", cls.el_high)
         df.insert(7, "sefd", cls.sefd)
         df.insert(8, "altitude", cls.altitude)
-
-        cls.df = df
 
         return cls
 
@@ -457,6 +462,210 @@ class Layout:
         cls.el_high = df.iloc[:, 6].to_list()
         cls.sefd = df.iloc[:, 7].to_list()
         cls.altitude = df.iloc[:, 8].to_list()
-        cls.df = df
+
+        return cls
+
+
+def loc2itrf(cx, cy, cz, locx=0.0, locy=0.0, locz=0.0):
+    """
+    Returns the given points locx, locy, locz, which are relative to a common central point
+    cx, cy, cz as the absolute points on the earth.
+
+    Modified version of a CASAtasks script
+    https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casa5/gcwrap/python/scripts/simutil.py
+
+    Parameters
+    ----------
+    locx: array_like or float
+    The x-coordinate in relative coordinates
+
+    locy: array_like or float
+    The y-coordinate in relative coordinates
+
+    locz: array_like or float
+    The z-coordinate in relative coordinates
+
+    cx: float
+    The center's x-coordinate in WGS84 coordinates
+
+    cy: float
+    The center's y-coordinate in WGS84 coordinates
+
+    cz: float
+    The center's z-coordinate in WGS84 coordinates
+
+    """
+
+    lon, lat, alt = geocentric2geodetic(cx, cy, cz)
+
+    locx, locy, locz = map(np.array, (locx, locy, locz))
+    # from Rob Reid;  need to generalize to use any datum...
+    phi, lmbda = map(np.deg2rad, (lat, lon))
+    sphi = np.sin(phi)
+    a = 6378137.0  # WGS84 equatorial semimajor axis
+    b = 6356752.3142  # WGS84 polar semimajor axis
+    ae = np.arccos(b / a)
+    N = a / np.sqrt(1.0 - (np.sin(ae) * sphi) ** 2)
+
+    factor = (N + locz + alt) * np.cos(phi) - locy * sphi
+
+    clmb = np.cos(lmbda)
+    slmb = np.sin(lmbda)
+
+    cx = factor * clmb - locx * slmb
+    cy = factor * slmb + locx * clmb
+    cz = (N * (b / a) ** 2 + locz + alt) * sphi + locy * np.cos(phi)
+
+    return cx, cy, cz
+
+
+def itrf2loc(x, y, z, cx, cy, cz):
+    """
+    Returns the relative position of given points x,y,z to a common central point
+    cx, cy, cz on the earth.
+
+    Modified version of a CASAtasks script
+    https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casa5/gcwrap/python/scripts/simutil.py
+
+    Parameters
+    ----------
+    x: array_like or float
+    The x-coordinate in WGS84 coordinates
+
+    y: array_like or float
+    The y-coordinate in WGS84 coordinates
+
+    z: array_like or float
+    The z-coordinate in WGS84 coordinates
+
+    cx: float
+    The center's x-coordinate in WGS84 coordinates
+
+    cy: float
+    The center's y-coordinate in WGS84 coordinates
+
+    cz: float
+    The center's z-coordinate in WGS84 coordinates
+
+    """
+
+    clon, clat, h = geocentric2geodetic(cx, cy, cz)
+
+    ccoslon = np.cos(clon)
+    csinlon = np.sin(clon)
+    csinlat = np.sin(clat)
+    ccoslat = np.cos(clat)
+
+    if isinstance(x, float):  # weak
+        x = [x]
+        y = [y]
+        z = [z]
+    n = x.__len__()
+    lat = np.zeros(n)
+    lon = np.zeros(n)
+    el = np.zeros(n)
+
+    # do like MsPlotConvert
+    for i in range(n):
+        # translate w/o rotating:
+        xtrans = x[i] - cx
+        ytrans = y[i] - cy
+        ztrans = z[i] - cz
+        # rotate
+        lat[i] = (-csinlon * xtrans) + (ccoslon * ytrans)
+        lon[i] = (
+            (-csinlat * ccoslon * xtrans)
+            - (csinlat * csinlon * ytrans)
+            + ccoslat * ztrans
+        )
+        el[i] = (
+            (ccoslat * ccoslon * xtrans)
+            + (ccoslat * csinlon * ytrans)
+            + csinlat * ztrans
+        )
+
+    return geodetic2geocentric(lon, lat, el)
+
+
+def geocentric2geodetic(x, y, z):
+    """
+    Returns given WGS84 coordinates (x,y,z) as geodetic coordinates (longitude, latitude, altitude)
+
+    Parameters
+    ----------
+    x: array_like or float
+    The x-coordinate in WGS84 coordinates
+
+    y: array_like or float
+    The y-coordinate in WGS84 coordinates
+
+    z: array_like or float
+    The z-coordinate in WGS84 coordinates
+    """
+
+    if np.isscalar(x):
+        lon, lat, alt = EarthLocation.from_geocentric(x, y, z, "m").to_geodetic()
+        lon = lon.deg
+        lat = lat.deg
+        alt = alt.value
+    else:
+        lon, lat, alt = np.array([]), np.array([]), np.array([])
+        for i in range(0, len(x)):
+            loc = EarthLocation.from_geocentric(x[i], y[i], z[i], "m")
+            lon = np.append(lon, loc.lon.deg)
+            lat = np.append(lat, loc.lon.deg)
+            alt = np.append(alt, loc.height.value)
+    return lon, lat, alt
+
+
+def geodetic2geocentric(lon, lat, alt):
+    """
+    Returns given geodetic coordinates (longitude, latitude, altitude) coordinates as (x,y,z)
+
+    Parameters
+    ----------
+    lon: array_like or float
+    The longitude in geodetic coordinates
+
+    lat: array_like or float
+    The latitude in geodetic coordinates
+
+    alt: array_like or float
+    The altitude in geodetic coordinates
+    """
+
+    if np.isscalar(lon):
+        x, y, z = EarthLocation.from_geodetic(
+            lon=lon, lat=lat, height=alt
+        ).to_geocentric()
+        x = x.value
+        y = y.value
+        z = z.value
+    else:
+        x, y, z = np.array([]), np.array([]), np.array([])
+        for i in range(0, len(x)):
+            loc = EarthLocation.from_geodetic(lon=lon, lat=lat, height=alt)
+            x = np.append(x, loc.x.value)
+            y = np.append(y, loc.y.value)
+            z = np.append(z, loc.z.value)
+    return x, y, z
+
+
+class Observatory:
+    def __init__(self):
+        None
+
+    @classmethod
+    def from_name(cls, name):
+        cls = cls()
+        obs = measures.observatory(name)
+        loc = EarthLocation.from_geodetic(
+            np.rad2deg(obs["m0"]["value"]),
+            np.rad2deg(obs["m1"]["value"]),
+            obs["m2"]["value"],
+        )
+        cls.x = loc.x
+        cls.y = loc.y
+        cls.z = loc.z
 
         return cls
