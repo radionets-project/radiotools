@@ -164,22 +164,17 @@ class Layout:
 
         """
 
-        if self.is_relative():
-            layout = self.as_absolute()
-        else:
-            layout = self
-
-        singular_alt = len(np.unique(layout.altitude)) == 1
+        singular_alt = len(np.unique(self.altitude)) == 1
 
         options = {
             "color": "#f54254" if singular_alt else None,
             "cmap": "cividis" if not singular_alt else None,
-            "c": layout.altitude if not singular_alt else None,
+            "c": self.altitude if not singular_alt else None,
         }
 
         fig, ax = plt.subplots(1, 1)
 
-        im = ax.scatter(layout.x, layout.y, **options)
+        im = ax.scatter(self.x, self.y, **options)
 
         if limits:
             if limits[0]:
@@ -191,14 +186,14 @@ class Layout:
             fig.colorbar(im, ax=ax, label="Altitude")
 
         if annotate:
-            for index, row in self.df.iterrows():
+            for index, row in self.get_dataframe().iterrows():
                 ax.annotate(
                     text=f"{row['station_name']}", xy=(row.x, row.y), fontsize=8
                 )
 
         ax.set_xlabel("Geocentric x in m")
         ax.set_ylabel("Geocentric y in m")
-        ax.set_title(f"Array Layout\n({layout.cfg_path.split('/')[-1]})")
+        ax.set_title(f"Array Layout\n({self.cfg_path.split('/')[-1]})")
         ax.set_box_aspect(1)
 
         if save_to_file != "":
