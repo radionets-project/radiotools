@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy.coordinates import EarthLocation
-from casatools import measures
 
 pd.options.display.float_format = "{:f}".format
-measures = measures()
 
 
 class Layout:
@@ -246,13 +244,12 @@ class Layout:
         if save_relative:
             # Is supposed to saved be in relative (local tangent plane) coordinates
 
-            # location = EarthLocation.of_site(rel_to_site)
-            location = prev_location = Observatory.from_name(rel_to_site)
+            location = EarthLocation.of_site(rel_to_site)
 
             if self.is_relative():
                 # ... and is already relative --> reconvert to absolute (if not same site)
 
-                prev_location = Observatory.from_name(self.rel_to_site)
+                prev_location = EarthLocation.of_site(self.rel_to_site)
                 nx, ny, nz = itrf2loc(
                     *loc2itrf(
                         prev_location.x.value,
@@ -281,8 +278,7 @@ class Layout:
 
             if self.is_relative():
                 # ... but is relative --> convert to absolute
-                # prev_location = EarthLocation.of_site(self.rel_to_site)
-                prev_location = Observatory.from_name(self.rel_to_site)
+                prev_location = EarthLocation.of_site(self.rel_to_site)
                 nx, ny, nz = loc2itrf(
                     prev_location.x.value,
                     prev_location.y.value,
@@ -655,25 +651,3 @@ def geodetic2geocentric(lon, lat, alt):
             y = np.append(y, loc.y.value)
             z = np.append(z, loc.z.value)
     return x, y, z
-
-
-class Observatory:
-    def __init__(self):
-        None
-
-    @classmethod
-    def from_name(cls, name):
-        cls = cls()
-
-        obs = measures.observatory(name)
-        loc = EarthLocation.from_geodetic(
-            np.rad2deg(obs["m1"]["value"]),
-            np.rad2deg(obs["m0"]["value"]),
-            obs["m2"]["value"],
-        )
-
-        cls.x = loc.x
-        cls.y = loc.y
-        cls.z = loc.z
-
-        return cls
