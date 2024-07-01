@@ -191,8 +191,8 @@ class Layout:
                     text=f"{row['station_name']}", xy=(row.x, row.y), fontsize=8
                 )
 
-        ax.set_xlabel("Geocentric x in m")
-        ax.set_ylabel("Geocentric y in m")
+        ax.set_xlabel(f"{'Relative' if self.is_relative() else 'Geocentric'} x in m")
+        ax.set_ylabel(f"{'Relative' if self.is_relative() else 'Geocentric'} y in m")
         ax.set_title(f"Array Layout\n({self.cfg_path.split('/')[-1]})")
         ax.set_box_aspect(1)
 
