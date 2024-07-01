@@ -251,7 +251,7 @@ class Layout:
 
             if self.is_relative():
                 # ... and is already relative --> reconvert to absolute (if not same site)
-                # prev_location = EarthLocation.of_site(self.rel_to_site)
+
                 prev_location = Observatory.from_name(self.rel_to_site)
                 nx, ny, nz = itrf2loc(
                     *loc2itrf(
@@ -266,6 +266,16 @@ class Layout:
                     location.y.value,
                     location.z.value,
                 )
+            else:
+                nx, ny, nz = itrf2loc(
+                    self.x,
+                    self.y,
+                    self.z,
+                    location.x.value,
+                    location.y.value,
+                    location.z.value,
+                )
+
         else:
             # Is supposed to be saved in absolute (geocentric) coordinates
 
@@ -516,7 +526,7 @@ def loc2itrf(cx, cy, cz, locx=0.0, locy=0.0, locz=0.0):
 
 def itrf2loc(x, y, z, cx, cy, cz):
     """
-    Returns the relative position of given points x,y,z to a common central point
+    Returns the relative position of given points x, y, z to a common central point
     cx, cy, cz on the earth.
 
     Modified version of a CASAtasks script
@@ -579,12 +589,12 @@ def itrf2loc(x, y, z, cx, cy, cz):
             + csinlat * ztrans
         )
 
-    return geodetic2geocentric(lon, lat, el)
+    return lat, lon, el
 
 
 def geocentric2geodetic(x, y, z):
     """
-    Returns given WGS84 coordinates (x,y,z) as geodetic coordinates (longitude, latitude, altitude)
+    Returns given WGS84 coordinates (x,y,z) as geodetic coordinates (longitude [deg], latitude [deg], altitude [meter])
 
     Parameters
     ----------
@@ -610,12 +620,13 @@ def geocentric2geodetic(x, y, z):
             lon = np.append(lon, loc.lon.deg)
             lat = np.append(lat, loc.lon.deg)
             alt = np.append(alt, loc.height.value)
+
     return lon, lat, alt
 
 
 def geodetic2geocentric(lon, lat, alt):
     """
-    Returns given geodetic coordinates (longitude, latitude, altitude) coordinates as (x,y,z)
+    Returns given geodetic coordinates (longitude, latitude, altitude) coordinates as (x,y,z) in meters
 
     Parameters
     ----------
@@ -638,8 +649,8 @@ def geodetic2geocentric(lon, lat, alt):
         z = z.value
     else:
         x, y, z = np.array([]), np.array([]), np.array([])
-        for i in range(0, len(x)):
-            loc = EarthLocation.from_geodetic(lon=lon, lat=lat, height=alt)
+        for i in range(0, len(lon)):
+            loc = EarthLocation.from_geodetic(lon=lon[i], lat=lat[i], height=alt[i])
             x = np.append(x, loc.x.value)
             y = np.append(y, loc.y.value)
             z = np.append(z, loc.z.value)
@@ -653,12 +664,14 @@ class Observatory:
     @classmethod
     def from_name(cls, name):
         cls = cls()
+
         obs = measures.observatory(name)
         loc = EarthLocation.from_geodetic(
-            np.rad2deg(obs["m0"]["value"]),
             np.rad2deg(obs["m1"]["value"]),
+            np.rad2deg(obs["m0"]["value"]),
             obs["m2"]["value"],
         )
+
         cls.x = loc.x
         cls.y = loc.y
         cls.z = loc.z
