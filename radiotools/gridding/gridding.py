@@ -20,9 +20,11 @@ class Gridder:
         uv_crop=([None, None], [None, None]),
         uv_exp=1,
         uv_norm=None,
+        uv_label="Amplitude a.u.",
         di_crop=([None, None], [None, None]),
         di_exp=1,
         di_norm=None,
+        di_label="Fluxdensity Jy/px",
         figsize=[20, 10],
     ):
         """
@@ -82,10 +84,10 @@ class Gridder:
         Parameters
         ----------
         uu: array_like
-        The U baseline coordinates in meters
+        The U baseline coordinates in units of wavelength
 
         vv: array_like
-        The U baseline coordinates in meters
+        The U baseline coordinates in units of wavelength
 
         stokes_i: array_like
         The Stokes I parameters of the measurement
@@ -95,7 +97,15 @@ class Gridder:
         u = uu * self.freq / c
         v = vv * self.freq / c
 
+        self.uu = uu
+        self.vv = vv
+
+        self.u = u
+        self.v = v
+
         stokes_i = stokes_i[:, 0]
+
+        self.stokes_i = stokes_i
 
         real = stokes_i.real.T
         imag = stokes_i.imag.T
@@ -132,6 +142,8 @@ class Gridder:
         mask_imag /= mask
 
         self.mask = mask
+        self.mask_real = mask_real
+        self.mask_imag = mask_imag
         self.dirty_img = np.abs(
             np.rot90(
                 np.fft.fftshift(

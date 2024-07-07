@@ -20,7 +20,7 @@ class Layout:
 
     def get_baselines(self):
         """
-        Returns an array containing the lengths of all baselines in meters.
+        Returns an array containing the lengths of all unique (!) baselines in meters.
 
         """
 
@@ -38,6 +38,20 @@ class Layout:
 
         return baselines
 
+    def get_baseline_vecs(self):
+        """
+        Returns an array containing the vectors of all (!) baselines (including conjugates).
+
+        """
+
+        loc = np.array([self.x, self.y]).T
+        baselines = np.array([])
+
+        for vec1 in loc:
+            for vec2 in loc:
+                baselines = np.append(baselines, np.reshape(vec1 - vec2, (2, 1)))
+        return np.reshape(baselines, (int(len(baselines) / 2), 2)).T
+
     def get_max_resolution(self, frequency):
         """
         Returns the maximal resolution of the layout
@@ -51,7 +65,30 @@ class Layout:
         """
         return 3600 * 180 / np.pi * 3 * 1e8 / (frequency * np.max(self.get_baselines()))
 
+    def get_station(self, name):
+        """
+        Returns all information about the station with the given name as a `pandas.Series`.
+
+        Parameters
+        ----------
+        name : str
+            The name of the station (antenna). This is case sensitive!
+
+        """
+        if name not in self.names:
+            raise KeyError(
+                "This station could not be found. Make sure you typed the name correctly (case sensitive)!"
+            )
+
+        df = self.get_dataframe()
+
+        return df.loc[df["station_name"] == name]
+
     def get_dataframe(self):
+        """
+        Returns the layout data as a `pandas.DataFrame`.
+        """
+
         return pd.DataFrame(
             data={
                 "x": self.x,
@@ -144,6 +181,19 @@ class Layout:
 
         return new_layout
 
+    def plot_uv(self):
+        """
+        Plots the uv-sampling (uv-plane) of the array.
+
+        """
+
+        baselines = self.get_baseline_vecs()
+        fig, ax = plt.subplots(1, 1, layout="constrained")
+        ax.scatter(baselines[0], baselines[1], color="royalblue", alpha=0.5)
+        ax.set_xlabel("$U$ / $\\lambda$")
+        ax.set_ylabel("$V$ / $\\lambda$")
+        return fig, ax
+
     def plot(self, save_to_file="", annotate=False, limits=None):
         """
         Generates a plot of the arrangement of the layout.
@@ -191,7 +241,7 @@ class Layout:
 
         ax.set_xlabel(f"{'Relative' if self.is_relative() else 'Geocentric'} x in m")
         ax.set_ylabel(f"{'Relative' if self.is_relative() else 'Geocentric'} y in m")
-        ax.set_title(f"Array Layout\n({self.cfg_path.split('/')[-1]})")
+        # ax.set_title(f"Array Layout\n({self.cfg_path.split('/')[-1]})")
         ax.set_box_aspect(1)
 
         if save_to_file != "":
