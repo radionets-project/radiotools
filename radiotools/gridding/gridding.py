@@ -2,9 +2,9 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from astropy.constants import c
 from astropy.io import fits
 from casatools.table import table
-from scipy.constants import c
 
 
 class Gridder:
@@ -28,7 +28,7 @@ class Gridder:
         figsize=[20, 10],
     ):
         """
-        Creates plots of the UV coverage of the measurement and plots its dirty image
+        Creates plots of the UV mask of the measurement and plots its dirty image
 
         Parameters
         ----------
@@ -55,14 +55,12 @@ class Gridder:
 
         """
 
-        plt.rcParams["figure.figsize"] = figsize
-
-        fig, ax = plt.subplots(1, 2, layout="constrained")
+        fig, ax = plt.subplots(1, 2, layout="constrained", figsize=figsize)
 
         im1 = ax[0].imshow((self.mask**uv_exp), cmap="inferno", norm=uv_norm)
-        ax[0].set_title("UV Plot")
-        ax[0].set_xlabel("U")
-        ax[0].set_ylabel("V")
+        ax[0].set_title("UV Mask")
+        ax[0].set_xlabel("pixels")
+        ax[0].set_ylabel("pixels")
         ax[0].set_xlim(left=uv_crop[0][0], right=uv_crop[0][1])
         ax[0].set_ylim(bottom=uv_crop[1][0], top=uv_crop[1][1])
         fig.colorbar(im1, ax=ax[0], shrink=0.8)
@@ -73,6 +71,8 @@ class Gridder:
         ax[1].set_xlim(left=di_crop[0][0], right=di_crop[0][1])
         ax[1].set_ylim(bottom=di_crop[1][0], top=di_crop[1][1])
         ax[1].set_title("Dirty image")
+        ax[1].set_xlabel("pixel")
+        ax[1].set_ylabel("pixel")
         fig.colorbar(im2, ax=ax[1], shrink=0.8, label="Jy/px")
 
         return fig, ax
@@ -144,7 +144,7 @@ class Gridder:
         self.mask = mask
         self.mask_real = mask_real
         self.mask_imag = mask_imag
-        self.dirty_img = np.abs(
+        self.dirty_img = np.real(
             np.rot90(
                 np.fft.fftshift(
                     np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))
@@ -190,7 +190,9 @@ class Gridder:
         data = file[0].data.T
 
         uu = data["UU--"].T * c
+        print(data["UU--"].T)
         vv = data["VV--"].T * c
+        print(data["VV--"].T)
 
         cls.freq = file[0].header["CRVAL4"]
         stokes_i = np.reshape(

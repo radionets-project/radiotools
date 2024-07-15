@@ -190,8 +190,8 @@ class Layout:
         baselines = self.get_baseline_vecs()
         fig, ax = plt.subplots(1, 1, layout="constrained")
         ax.scatter(baselines[0], baselines[1], color="royalblue", alpha=0.5)
-        ax.set_xlabel("$U$ / $\\lambda$")
-        ax.set_ylabel("$V$ / $\\lambda$")
+        ax.set_xlabel("$u$ in m")
+        ax.set_ylabel("$v$ in m")
         return fig, ax
 
     def plot(self, save_to_file="", annotate=False, limits=None):
