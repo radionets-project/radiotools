@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -5,6 +6,7 @@ import numpy as np
 from astropy.constants import c
 from astropy.io import fits
 from casatools.table import table
+from matplotlib.colors import LogNorm, PowerNorm
 
 
 class Gridder:
@@ -17,65 +19,404 @@ class Gridder:
 
     def plot(
         self,
-        uv_crop=([None, None], [None, None]),
-        uv_exp=1,
-        uv_norm=None,
-        uv_label="Amplitude a.u.",
-        di_crop=([None, None], [None, None]),
-        di_exp=1,
-        di_norm=None,
-        di_label="Fluxdensity Jy/px",
-        figsize=[20, 10],
+        uv_args={},
+        mask_args={},
+        mask_abs_args={},
+        mask_phase_args={},
+        dirty_img_args={},
+        save_to=None,
+        save_args={},
+        figsize=[20, 20],
     ):
         """
-        Creates plots of the UV mask of the measurement and plots its dirty image
+        Creates a summary plot containing the gridded and ungridded uv coverage,
+        the amplitude and phase of the visibilities and the dirty image
 
         Parameters
         ----------
-        uv_crop: tuple of array_like, optional
-        The part of the UV coverage to display. Has to be a tuple of the bounds (x_bounds, y_bounds).
+        uv_args : dict, optional
+            The function arguments for the uv coverage plot (arguments for the plot_ungridded_uv function)
 
-        uv_exp: float, optional
-        The exponent of the UV coverage, e.g. for better visibility
+        mask_args : dict, optional
+            The function arguments for the uv mask plot (arguments for the plot_mask function)
 
-        uv_norm: matplotlib.colors.norm, optional
-        The norm to apply to the plot of the UV coverage, e.g. matplotlib.colors.LogNorm
+        mask_abs_args : dict, optional
+            The function arguments for the uv coverage plot (arguments for the plot_mask_absolute function)
 
-        di_crop: tuple of array_like, optional
-        The part of the dirty image to display. Has to be a tuple of the bounds (x_bounds, y_bounds).
+        mask_phase_args : dict, optional
+            The function arguments for the uv coverage plot (arguments for the plot_mask_phase function)
 
-        di_exp: float, optional
-        The exponent of the dirty image, e.g. for better visibility
+        dirty_img_args : dict, optional
+            The function arguments for the uv coverage plot (arguments for the plot_dirty_image function)
 
-        uv_norm: matplotlib.colors.norm, optional
-        The norm to apply to the plot of the dirty image, e.g. matplotlib.colors.LogNorm
+        save_to : str, optional
+            Path to save the figure to
 
-        figsize: array_like, optional
-        The size of the plots
+        save_args : str, optional
+            The arguments for the savefig function
+
+        figsize : array_like, optional
+            The size of the plots
 
         """
 
-        fig, ax = plt.subplots(1, 2, layout="constrained", figsize=figsize)
+        fig, ax = plt.subplots(ncols=2, nrows=3, layout="constrained", figsize=figsize)
+        ax = np.ravel(ax)
 
-        im1 = ax[0].imshow((self.mask**uv_exp), cmap="inferno", norm=uv_norm)
-        ax[0].set_title("UV Mask")
-        ax[0].set_xlabel("pixels")
-        ax[0].set_ylabel("pixels")
-        ax[0].set_xlim(left=uv_crop[0][0], right=uv_crop[0][1])
-        ax[0].set_ylim(bottom=uv_crop[1][0], top=uv_crop[1][1])
-        fig.colorbar(im1, ax=ax[0], shrink=0.8)
+        titles = [
+            "Ungridded $(u,v)$-coverage",
+            "Gridded $(u,v)$-coverage",
+            "Amplitude of visibilities",
+            "Phase of visibilities",
+            "Dirty Image",
+        ]
 
-        im2 = ax[1].imshow(
-            np.rot90(self.dirty_img**di_exp, 3), cmap="inferno", norm=di_norm
+        for i in range(0, 5):
+            ax[i].set_title(titles[i])
+
+        self.plot_ungridded_uv(**uv_args, fig=fig, ax=ax[0])
+        self.plot_mask(**mask_args, fig=fig, ax=ax[1])
+        self.plot_mask_absolute(**mask_abs_args, fig=fig, ax=ax[2])
+        self.plot_mask_phase(**mask_phase_args, fig=fig, ax=ax[3])
+        self.plot_dirty_image(**dirty_img_args, fig=fig, ax=ax[4])
+        ax[5].set_axis_off()
+
+        if save_to is not None:
+            fig.savefig(save_to, **save_args)
+
+    def plot_ungridded_uv(
+        self,
+        plot_args={"color": "royalblue", "s": 0.01},
+        save_to=None,
+        save_args={},
+        fig=None,
+        ax=None,
+    ):
+        """
+        Plots the ungridded uv coverage
+
+        Parameters
+        ----------
+        plot_args : dict, optional
+            The arguments for the pyplot scatter plot of the uv tuples
+
+        save_to : str, optional
+            Path to save the figure to
+
+        save_args : str, optional
+            The arguments for the savefig function
+
+        fig : matplotlib.figure.Figure, optional
+            A figure to put the plot into
+
+        ax : matplotlib.axes._axes.Axes, optional
+            A axis to put the plot into
+
+        """
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        ax.scatter(
+            x=np.append(self.uu, -self.uu), y=np.append(self.vv, -self.vv), **plot_args
         )
-        ax[1].set_xlim(left=di_crop[0][0], right=di_crop[0][1])
-        ax[1].set_ylim(bottom=di_crop[1][0], top=di_crop[1][1])
-        ax[1].set_title("Dirty image")
-        ax[1].set_xlabel("pixel")
-        ax[1].set_ylabel("pixel")
-        fig.colorbar(im2, ax=ax[1], shrink=0.8, label="Jy/px")
+        ax.set_xlabel("$u$ / $\\lambda$")
+        ax.set_ylabel("$v$ / $\\lambda$")
+        plt.tight_layout()
 
-        return fig, ax
+        if save_to is not None:
+            fig.savefig(save_to, **save_args)
+
+        if ax is None:
+            return fig, ax
+        else:
+            return ax
+
+    def plot_mask(
+        self,
+        crop=([None, None], [None, None]),
+        plot_args={"cmap": "inferno", "norm": LogNorm()},
+        colorbar_shrink=0.7,
+        save_to=None,
+        save_args={},
+        fig=None,
+        ax=None,
+    ):
+        """
+        Plots the gridded uv coverage mask
+
+        Parameters
+        ----------
+        crop : tuple of arrays, optional
+            The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
+
+        plot_args : dict, optional
+            The arguments for the pyplot scatter plot of the uv tuples
+
+        colorbar_shrink : float, optional
+            The shrink parameter for the colorbar
+
+        save_to : str, optional
+            Path to save the figure to
+
+        save_args : str, optional
+            The arguments for the savefig function
+
+        fig : matplotlib.figure.Figure, optional
+            A figure to put the plot into
+
+        ax : matplotlib.axes._axes.Axes, optional
+            A axis to put the plot into
+
+        """
+
+        if None in (fig, ax) and not all(x is None for x in (fig, ax)):
+            raise KeyError(
+                "The parameters ax and fig have to be both None or not None!"
+            )
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        im0 = ax.imshow(self.mask, **plot_args)
+        ax.set_xlim(crop[0][0], crop[0][1])
+        ax.set_ylim(crop[1][0], crop[1][1])
+        ax.set_xlabel("pixels")
+        ax.set_ylabel("pixels")
+        fig.colorbar(
+            im0, ax=ax, shrink=colorbar_shrink, label="$(u,v)$ per pixel in 1 / px"
+        )
+
+        plt.tight_layout()
+
+        if save_to is not None:
+            fig.savefig(save_to, **save_args)
+
+        if ax is None:
+            return fig, ax
+        else:
+            return ax
+
+    def plot_mask_absolute(
+        self,
+        crop=([None, None], [None, None]),
+        plot_args={"cmap": "inferno", "norm": LogNorm()},
+        colorbar_shrink=0.7,
+        save_to=None,
+        save_args={},
+        fig=None,
+        ax=None,
+    ):
+        """
+        Plots the amplitude of the complex visibilities
+
+        Parameters
+        ----------
+        crop : tuple of arrays, optional
+            The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
+
+        plot_args : dict, optional
+            The arguments for the pyplot scatter plot of the uv tuples
+
+        colorbar_shrink : float, optional
+            The shrink parameter for the colorbar
+
+        save_to : str, optional
+            Path to save the figure to
+
+        save_args : str, optional
+            The arguments for the savefig function
+
+        fig : matplotlib.figure.Figure, optional
+            A figure to put the plot into
+
+        ax : matplotlib.axes._axes.Axes, optional
+            A axis to put the plot into
+
+        """
+
+        if None in (fig, ax) and not all(x is None for x in (fig, ax)):
+            raise KeyError(
+                "The parameters ax and fig have to be both None or not None!"
+            )
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        im = ax.imshow(np.absolute(self.mask_real + self.mask_imag * 1j), **plot_args)
+        ax.set_xlim(crop[0][0], crop[0][1])
+        ax.set_ylim(crop[1][0], crop[1][1])
+        ax.set_xlabel("pixels")
+        ax.set_ylabel("pixels")
+
+        fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Intensity in a.u.")
+
+        plt.tight_layout()
+
+        if save_to is not None:
+            fig.savefig(save_to, **save_args)
+
+        if ax is None:
+            return fig, ax
+        else:
+            return ax
+
+    def plot_mask_phase(
+        self,
+        crop=([None, None], [None, None]),
+        plot_args={"cmap": "coolwarm"},
+        colorbar_shrink=0.7,
+        save_to=None,
+        save_args={},
+        fig=None,
+        ax=None,
+    ):
+        """
+        Plots the phase of the complex visibilities
+
+        Parameters
+        ----------
+        crop : tuple of arrays, optional
+            The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
+
+        plot_args : dict, optional
+            The arguments for the pyplot scatter plot of the uv tuples
+
+        colorbar_shrink : float, optional
+            The shrink parameter for the colorbar
+
+        save_to : str, optional
+            Path to save the figure to
+
+        save_args : str, optional
+            The arguments for the savefig function
+
+        fig : matplotlib.figure.Figure, optional
+            A figure to put the plot into
+
+        ax : matplotlib.axes._axes.Axes, optional
+            A axis to put the plot into
+
+        """
+
+        if None in (fig, ax) and not all(x is None for x in (fig, ax)):
+            raise KeyError(
+                "The parameters ax and fig have to be both None or not None!"
+            )
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        im = ax.imshow(np.angle(self.mask_real + self.mask_imag * 1j), **plot_args)
+        ax.set_xlim(crop[0][0], crop[0][1])
+        ax.set_ylim(crop[1][0], crop[1][1])
+        ax.set_xlabel("pixels")
+        ax.set_ylabel("pixels")
+
+        cbar = fig.colorbar(
+            im, ax=ax, shrink=colorbar_shrink, label="Phase difference in rad"
+        )
+        cbar.set_ticks(ticks=[-np.pi, 0, np.pi], labels=["$-\\pi$", "0", "$\\pi$"])
+
+        plt.tight_layout()
+
+        if save_to is not None:
+            fig.savefig(save_to, **save_args)
+
+        if ax is None:
+            return fig, ax
+        else:
+            return ax
+
+    def plot_dirty_image(
+        self,
+        mode="real",
+        crop=([None, None], [None, None]),
+        exp=1,
+        plot_args={"cmap": "inferno", "origin": "lower"},
+        colorbar_shrink=1,
+        save_to=None,
+        save_args={},
+        fig=None,
+        ax=None,
+    ):
+        """
+        Plots the dirty image generated by the iFFT of the visibilites
+
+        Parameters
+        ----------
+        mode : str, optional
+            The component or variant of the diry image to show
+            (available: real, imag, abs)
+
+        crop : tuple of arrays, optional
+            The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
+
+        exp : float, optional
+            The exponent for the power norm to apply to the plot
+
+        plot_args : dict, optional
+            The arguments for the pyplot scatter plot of the uv tuples
+
+        colorbar_shrink : float, optional
+            The shrink parameter for the colorbar
+
+        save_to : str, optional
+            Path to save the figure to
+
+        save_args : str, optional
+            The arguments for the savefig function
+
+        fig : matplotlib.figure.Figure, optional
+            A figure to put the plot into
+
+        ax : matplotlib.axes._axes.Axes, optional
+            A axis to put the plot into
+
+        """
+
+        if None in (fig, ax) and not all(x is None for x in (fig, ax)):
+            raise KeyError(
+                "The parameters ax and fig have to be both None or not None!"
+            )
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        match mode:
+            case "real":
+                dirty_image = self.dirty_img
+            case "imag":
+                dirty_image = np.imag(self.dirty_img_cmplx)[:, ::-1]
+            case "abs":
+                dirty_image = np.absolute(self.dirty_img_cmplx)[:, ::-1]
+            case _:
+                dirty_image = self.dirty_img
+                warnings.warn(
+                    f"The mode {mode} does not exist. Use real, imag or abs. Using real by default"
+                )
+
+        dirty_image[dirty_image < 0] = 0
+
+        norm = None if exp == 1 else PowerNorm(gamma=exp)
+
+        im = ax.imshow(dirty_image, norm=norm, **plot_args)
+        ax.set_xlabel("pixels")
+        ax.set_ylabel("pixels")
+        fig.colorbar(
+            im,
+            ax=ax,
+            shrink=colorbar_shrink,
+            label="$\\text{Fluxdensity}\\text{ in }\\text{Jy/px}$",
+        )
+
+        if save_to is not None:
+            fig.savefig(save_to, **save_args)
+
+        if ax is None:
+            return fig, ax
+        else:
+            return ax
 
     def _create_attributes(self, uu, vv, stokes_i):
         """
@@ -83,14 +424,14 @@ class Gridder:
 
         Parameters
         ----------
-        uu: array_like
-        The U baseline coordinates in units of wavelength
+        uu : array_like
+            The U baseline coordinates in units of wavelength
 
-        vv: array_like
-        The U baseline coordinates in units of wavelength
+        vv : array_like
+            The U baseline coordinates in units of wavelength
 
-        stokes_i: array_like
-        The Stokes I parameters of the measurement
+        stokes_i : array_like
+            The Stokes I parameters of the measurement
 
         """
 
@@ -144,14 +485,12 @@ class Gridder:
         self.mask = mask
         self.mask_real = mask_real
         self.mask_imag = mask_imag
-        self.dirty_img = np.real(
-            np.rot90(
-                np.fft.fftshift(
-                    np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))
-                ),
-                3,
-            )
-        )[:, ::-1]
+        self.dirty_img_cmplx = np.rot90(
+            np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))),
+            3,
+        )
+        self.dirty_img = np.real(self.dirty_img_cmplx)[:, ::-1]
+
         return self
 
     @classmethod
@@ -161,14 +500,14 @@ class Gridder:
 
         Parameters
         ----------
-        fits_path: str
-        The path of the FITS file
+        fits_path : str
+            The path of the FITS file
 
-        img_size: int
-        The pixel size of the image
+        img_size : int
+            The pixel size of the image
 
-        fov: float
-        The field of view (pixel size * image size) of the image in arcseconds
+        fov : float
+            The field of view (pixel size * image size) of the image in arcseconds
 
         """
 
@@ -190,9 +529,7 @@ class Gridder:
         data = file[0].data.T
 
         uu = data["UU--"].T * c
-        print(data["UU--"].T)
         vv = data["VV--"].T * c
-        print(data["VV--"].T)
 
         cls.freq = file[0].header["CRVAL4"]
         stokes_i = np.reshape(
@@ -213,13 +550,13 @@ class Gridder:
         Parameters
         ----------
         ms_path: str
-        The path of the measurement set directory
+            The path of the measurement set directory
 
         img_size: int
-        The pixel size of the image
+            The pixel size of the image
 
         fov: float
-        The field of view (pixel size * image size) of the image in arcseconds
+            The field of view (pixel size * image size) of the image in arcseconds
 
         """
 
@@ -241,11 +578,8 @@ class Gridder:
         data = table(ms_path).getcol("DATA").T
 
         uvw = table(ms_path).getcol("UVW").T
-        print(uvw.shape)
-        print(data.shape)
 
         cls.freq = table(ms_path + "SPECTRAL_WINDOW").getcol("CHAN_FREQ").T
-        # cls.freq = 231.94301484300001e9
 
         uvw = np.repeat(uvw[None], 1, axis=0)
         uu = uvw[:, :, 0]
