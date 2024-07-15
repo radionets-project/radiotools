@@ -313,10 +313,7 @@ class Gridder:
         ax.set_xlabel("pixels")
         ax.set_ylabel("pixels")
 
-        cbar = fig.colorbar(
-            im, ax=ax, shrink=colorbar_shrink, label="Phase difference in rad"
-        )
-        cbar.set_ticks(ticks=[-np.pi, 0, np.pi], labels=["$-\\pi$", "0", "$\\pi$"])
+        fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Phase difference in rad")
 
         plt.tight_layout()
 
