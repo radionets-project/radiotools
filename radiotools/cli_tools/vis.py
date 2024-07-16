@@ -38,7 +38,11 @@ def main():
     location = click.prompt("Location [array layout or an existing location]")
 
     vis = SourceVisibility(
-        target=target, date=date, location=location, obs_length=obs_length
+        target=target,
+        date=date,
+        location=location,
+        obs_length=obs_length,
+        print_optimal_date=True,
     )
 
     plot = click.confirm("Plot visibility?", default=False)
