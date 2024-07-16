@@ -42,6 +42,7 @@ class SourceVisibility:
         location: str or EarthLocation = None,
         obs_length: float = 4.0,
         frame="icrs",
+        print_optimal_date: bool = False,
     ) -> None:
         """
         Parameters
@@ -103,7 +104,7 @@ class SourceVisibility:
         self._get_dates()
         self._get_pos()
 
-        self.get_optimal_date()
+        self.get_optimal_date(print_optimal_date)
 
     def _get_dates(self) -> None:
         """Creates a date range from the dates given
@@ -285,7 +286,7 @@ class SourceVisibility:
 
         return max(0, delta)
 
-    def get_optimal_date(self):
+    def get_optimal_date(self, print_result=False):
         times = dict()
         t_range = namedtuple("t_range", ["start", "end"])
 
@@ -317,21 +318,22 @@ class SourceVisibility:
 
         result = times[np.argmax(dt.sum(axis=0))]
 
-        print("")
-        tab = Table(title="*** Best observation time ***")
-        tab.add_column("Station ID", justify="right", style="cyan")
-        tab.add_column("Obs. time start")
-        tab.add_column("Obs. time midpoint")
-        tab.add_column("Obs. time end")
+        if print_result:
+            print("")
+            tab = Table(title="*** Best observation time ***")
+            tab.add_column("Station ID", justify="right", style="cyan")
+            tab.add_column("Obs. time start")
+            tab.add_column("Obs. time midpoint")
+            tab.add_column("Obs. time end")
 
-        tab.add_row(
-            f"{np.argmax(dt.sum(axis=0))}",
-            result[0].strftime("%Y-%m-%d %H:%M:%S"),
-            result[1].strftime("%Y-%m-%d %H:%M:%S"),
-            result[2].strftime("%Y-%m-%d %H:%M:%S"),
-        )
-        console = Console()
-        console.print(tab)
-        print("")
+            tab.add_row(
+                f"{np.argmax(dt.sum(axis=0))}",
+                result[0].strftime("%Y-%m-%d %H:%M:%S"),
+                result[1].strftime("%Y-%m-%d %H:%M:%S"),
+                result[2].strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            console = Console()
+            console.print(tab)
+            print("")
 
         return result
