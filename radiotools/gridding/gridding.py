@@ -127,10 +127,7 @@ class Gridder:
         if save_to is not None:
             fig.savefig(save_to, **save_args)
 
-        if ax is None:
-            return fig, ax
-        else:
-            return ax
+        return fig, ax
 
     def plot_mask(
         self,
@@ -192,16 +189,13 @@ class Gridder:
         if save_to is not None:
             fig.savefig(save_to, **save_args)
 
-        if ax is None:
-            return fig, ax
-        else:
-            return ax
+        return fig, ax
 
     def plot_mask_absolute(
         self,
         crop=([None, None], [None, None]),
         plot_args={"cmap": "inferno", "norm": LogNorm()},
-        colorbar_shrink=0.7,
+        colorbar_shrink=0.9,
         save_to=None,
         save_args={},
         fig=None,
@@ -256,16 +250,13 @@ class Gridder:
         if save_to is not None:
             fig.savefig(save_to, **save_args)
 
-        if ax is None:
-            return fig, ax
-        else:
-            return ax
+        return fig, ax
 
     def plot_mask_phase(
         self,
         crop=([None, None], [None, None]),
         plot_args={"cmap": "coolwarm"},
-        colorbar_shrink=0.7,
+        colorbar_shrink=0.9,
         save_to=None,
         save_args={},
         fig=None,
@@ -320,10 +311,7 @@ class Gridder:
         if save_to is not None:
             fig.savefig(save_to, **save_args)
 
-        if ax is None:
-            return fig, ax
-        else:
-            return ax
+        return fig, ax
 
     def plot_dirty_image(
         self,
@@ -410,10 +398,7 @@ class Gridder:
         if save_to is not None:
             fig.savefig(save_to, **save_args)
 
-        if ax is None:
-            return fig, ax
-        else:
-            return ax
+        return fig, ax
 
     def _create_attributes(self, uu, vv, stokes_i):
         """
@@ -450,8 +435,8 @@ class Gridder:
 
         samps = np.array(
             [
-                np.append(u.ravel(), -u.ravel()),
-                np.append(v.ravel(), -v.ravel()),
+                np.append(-u.ravel(), u.ravel()),
+                np.append(-v.ravel(), v.ravel()),
                 np.append(real.ravel(), real.ravel()),
                 np.append(imag.ravel(), -imag.ravel()),
             ]
@@ -482,9 +467,8 @@ class Gridder:
         self.mask = mask
         self.mask_real = mask_real
         self.mask_imag = mask_imag
-        self.dirty_img_cmplx = np.rot90(
-            np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))),
-            3,
+        self.dirty_img_cmplx = np.fft.fftshift(
+            np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))
         )
         self.dirty_img = np.real(self.dirty_img_cmplx)[:, ::-1]
 
