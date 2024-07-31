@@ -64,10 +64,10 @@ class Gridder:
         ax = np.ravel(ax)
 
         titles = [
-            "Ungridded $(u,v)$-coverage",
-            "Gridded $(u,v)$-coverage",
-            "Amplitude of visibilities",
-            "Phase of visibilities",
+            "Ungerasterte $(u,v)$-Abdeckung",
+            "Gerasterte $(u,v)$-Abdeckung",
+            "Amplitude der Visibilities",
+            "Phase der Visibilities",
             "Dirty Image",
         ]
 
@@ -177,10 +177,10 @@ class Gridder:
         im0 = ax.imshow(self.mask, **plot_args)
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
-        ax.set_xlabel("pixels")
-        ax.set_ylabel("pixels")
+        ax.set_xlabel("Pixel")
+        ax.set_ylabel("Pixel")
         fig.colorbar(
-            im0, ax=ax, shrink=colorbar_shrink, label="$(u,v)$ per pixel in 1 / px"
+            im0, ax=ax, shrink=colorbar_shrink, label="$(u,v)$ pro Pixel in 1 / px"
         )
 
         if save_to is not None:
@@ -237,10 +237,10 @@ class Gridder:
         im = ax.imshow(np.absolute(self.mask_real + self.mask_imag * 1j), **plot_args)
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
-        ax.set_xlabel("pixels")
-        ax.set_ylabel("pixels")
+        ax.set_xlabel("Pixel")
+        ax.set_ylabel("Pixel")
 
-        fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Intensity in a.u.")
+        fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Intensität in a.u.")
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
@@ -296,10 +296,10 @@ class Gridder:
         im = ax.imshow(np.angle(self.mask_real + self.mask_imag * 1j), **plot_args)
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
-        ax.set_xlabel("pixels")
-        ax.set_ylabel("pixels")
+        ax.set_xlabel("Pixel")
+        ax.set_ylabel("Pixel")
 
-        fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Phase difference in rad")
+        fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Phasendifferenz in rad")
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
@@ -379,13 +379,13 @@ class Gridder:
         norm = None if exp == 1 else PowerNorm(gamma=exp)
 
         im = ax.imshow(dirty_image, norm=norm, **plot_args)
-        ax.set_xlabel("pixels")
-        ax.set_ylabel("pixels")
+        ax.set_xlabel("Pixel")
+        ax.set_ylabel("Pixel")
         fig.colorbar(
             im,
             ax=ax,
             shrink=colorbar_shrink,
-            label="$\\text{Fluxdensity}\\text{ in }\\text{Jy/px}$",
+            label="$\\text{Flussdichte}\\text{ in }\\text{Jy/px}$",
         )
 
         if save_to is not None:
