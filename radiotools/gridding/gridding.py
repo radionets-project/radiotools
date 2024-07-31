@@ -122,7 +122,6 @@ class Gridder:
         )
         ax.set_xlabel("$u$ / $\\lambda$")
         ax.set_ylabel("$v$ / $\\lambda$")
-        plt.tight_layout()
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
@@ -173,7 +172,7 @@ class Gridder:
             )
 
         if ax is None:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(layout="constrained")
 
         im0 = ax.imshow(self.mask, **plot_args)
         ax.set_xlim(crop[0][0], crop[0][1])
@@ -183,8 +182,6 @@ class Gridder:
         fig.colorbar(
             im0, ax=ax, shrink=colorbar_shrink, label="$(u,v)$ per pixel in 1 / px"
         )
-
-        plt.tight_layout()
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
@@ -235,7 +232,7 @@ class Gridder:
             )
 
         if ax is None:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(layout="constrained")
 
         im = ax.imshow(np.absolute(self.mask_real + self.mask_imag * 1j), **plot_args)
         ax.set_xlim(crop[0][0], crop[0][1])
@@ -244,8 +241,6 @@ class Gridder:
         ax.set_ylabel("pixels")
 
         fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Intensity in a.u.")
-
-        plt.tight_layout()
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
@@ -296,7 +291,7 @@ class Gridder:
             )
 
         if ax is None:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(layout="constrained")
 
         im = ax.imshow(np.angle(self.mask_real + self.mask_imag * 1j), **plot_args)
         ax.set_xlim(crop[0][0], crop[0][1])
@@ -305,8 +300,6 @@ class Gridder:
         ax.set_ylabel("pixels")
 
         fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Phase difference in rad")
-
-        plt.tight_layout()
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
@@ -366,7 +359,7 @@ class Gridder:
             )
 
         if ax is None:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(layout="constrained")
 
         match mode:
             case "real":
