@@ -131,7 +131,7 @@ class Gridder:
     def plot_mask(
         self,
         crop=([None, None], [None, None]),
-        plot_args={"cmap": "inferno", "norm": LogNorm()},
+        plot_args={"cmap": "inferno", "norm": LogNorm(clip=True)},
         colorbar_shrink=0.7,
         save_to=None,
         save_args={},
@@ -191,7 +191,7 @@ class Gridder:
     def plot_mask_absolute(
         self,
         crop=([None, None], [None, None]),
-        plot_args={"cmap": "inferno", "norm": LogNorm()},
+        plot_args={"cmap": "inferno", "norm": LogNorm(clip=True)},
         colorbar_shrink=0.9,
         save_to=None,
         save_args={},
@@ -373,8 +373,6 @@ class Gridder:
                 warnings.warn(
                     f"The mode {mode} does not exist. Use real, imag or abs. Using real by default"
                 )
-
-        dirty_image[dirty_image < 0] = 0
 
         norm = None if exp == 1 else PowerNorm(gamma=exp)
 
