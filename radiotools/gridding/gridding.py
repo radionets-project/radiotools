@@ -118,10 +118,10 @@ class Gridder:
             fig, ax = plt.subplots()
 
         ax.scatter(
-            x=np.append(self.uu, -self.uu), y=np.append(self.vv, -self.vv), **plot_args
+            x=np.append(self.u, -self.u), y=np.append(self.v, -self.v), **plot_args
         )
-        ax.set_xlabel("$u$ / $\\lambda$")
-        ax.set_ylabel("$v$ / $\\lambda$")
+        ax.set_xlabel("$u$ in $\\lambda$")
+        ax.set_ylabel("$v$ in $\\lambda$")
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
