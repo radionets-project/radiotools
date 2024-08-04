@@ -174,7 +174,7 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        im0 = ax.imshow(self.mask, **plot_args)
+        im0 = ax.imshow(self.mask, origin="lower", **plot_args)
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
         ax.set_xlabel("Pixel")
@@ -191,6 +191,7 @@ class Gridder:
     def plot_mask_absolute(
         self,
         crop=([None, None], [None, None]),
+        rot90=0,
         plot_args={"cmap": "inferno", "norm": LogNorm(clip=True)},
         colorbar_shrink=0.9,
         save_to=None,
@@ -206,6 +207,10 @@ class Gridder:
         crop : tuple of arrays, optional
             The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
 
+        rot90: int, optional
+            The amount of times the image is supposed to be rotated by 90
+            degrees clockwise
+
         plot_args : dict, optional
             The arguments for the pyplot scatter plot of the uv tuples
 
@@ -234,7 +239,11 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        im = ax.imshow(np.absolute(self.mask_real + self.mask_imag * 1j), **plot_args)
+        im = ax.imshow(
+            np.rot90(np.absolute(self.mask_real + self.mask_imag * 1j), rot90),
+            origin="lower",
+            **plot_args,
+        )
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
         ax.set_xlabel("Pixel")
@@ -250,6 +259,7 @@ class Gridder:
     def plot_mask_phase(
         self,
         crop=([None, None], [None, None]),
+        rot90=0,
         plot_args={"cmap": "coolwarm"},
         colorbar_shrink=0.9,
         save_to=None,
@@ -264,6 +274,10 @@ class Gridder:
         ----------
         crop : tuple of arrays, optional
             The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
+
+        rot90: int, optional
+            The amount of times the image is supposed to be rotated by 90
+            degrees clockwise
 
         plot_args : dict, optional
             The arguments for the pyplot scatter plot of the uv tuples
@@ -293,13 +307,21 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        im = ax.imshow(np.angle(self.mask_real + self.mask_imag * 1j), **plot_args)
+        im = ax.imshow(
+            np.rot90(np.angle(self.mask_real + self.mask_imag * 1j), rot90),
+            origin="lower",
+            **plot_args,
+        )
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
         ax.set_xlabel("Pixel")
         ax.set_ylabel("Pixel")
 
-        fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Phasendifferenz in rad")
+        cbar = fig.colorbar(
+            im, ax=ax, shrink=colorbar_shrink, label="Phasendifferenz in rad"
+        )
+        cbar.set_ticks(np.arange(-np.pi, 3 / 2 * np.pi, np.pi / 2))
+        cbar.set_ticklabels(["$-\\pi$", "$-\\pi/2$", "$0$", "$\\pi/2$", "$\\pi$"])
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
@@ -311,6 +333,7 @@ class Gridder:
         mode="real",
         crop=([None, None], [None, None]),
         exp=1,
+        rot90=0,
         plot_args={"cmap": "inferno", "origin": "lower"},
         colorbar_shrink=1,
         save_to=None,
@@ -332,6 +355,10 @@ class Gridder:
 
         exp : float, optional
             The exponent for the power norm to apply to the plot
+
+        rot90: int, optional
+            The amount of times the image is supposed to be rotated by 90
+            degrees clockwise
 
         plot_args : dict, optional
             The arguments for the pyplot scatter plot of the uv tuples
@@ -376,7 +403,7 @@ class Gridder:
 
         norm = None if exp == 1 else PowerNorm(gamma=exp)
 
-        im = ax.imshow(dirty_image, norm=norm, **plot_args)
+        im = ax.imshow(np.rot90(dirty_image, rot90), norm=norm, **plot_args)
         ax.set_xlabel("Pixel")
         ax.set_ylabel("Pixel")
         fig.colorbar(

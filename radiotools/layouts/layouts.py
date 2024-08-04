@@ -181,40 +181,54 @@ class Layout:
 
         return new_layout
 
-    def plot_uv(self, save_to_file="", plot_args={"color":"royalblue", "alpha":0.5}, save_args={}, show_zeros=False):
+    def plot_uv(
+        self,
+        save_to_file="",
+        ref_frequency=None,
+        plot_args={"color": "royalblue", "alpha": 0.5},
+        save_args={},
+        show_zeros=False,
+    ):
         """
         Plots the uv-sampling (uv-plane) of the array.
-        
+
         Parameters
         ----------
         save_to_file : str, optional
             The name of the file the plot should be saved to.
-            
+
         plot_args : dict, optional
             Arguments to pass to the axis.scatter function
-        
+
         save_args : dict, optional
             Arguments to pass to the figure.savefig function
 
         """
 
         baselines = self.get_baseline_vecs()
-        
+
         if not show_zeros:
             nonzero_bl = np.linalg.norm(baselines, axis=0) != 0
             baselines = baselines[:, nonzero_bl]
-        
+
         fig, ax = plt.subplots(1, 1, layout="constrained")
+
+        if ref_frequency is not None:
+            baselines /= 3e8 / ref_frequency
+
+        print(baselines[0].shape)
         ax.scatter(baselines[0], baselines[1], **plot_args)
-        ax.set_xlabel("$u$ in m")
-        ax.set_ylabel("$v$ in m")
-        
+        ax.set_xlabel("$u$ in m" if ref_frequency is None else "$u/\\lambda$")
+        ax.set_ylabel("$v$ in m" if ref_frequency is None else "$v/\\lambda$")
+
         if save_to_file != "":
             fig.savefig(save_to_file, **save_args)
-        
+
         return fig, ax
 
-    def plot(self, save_to_file="", annotate=False, limits=None, plot_args={}, save_args={}):
+    def plot(
+        self, save_to_file="", annotate=False, limits=None, plot_args={}, save_args={}
+    ):
         """
         Generates a plot of the arrangement of the layout.
 
@@ -232,7 +246,7 @@ class Layout:
 
         plot_args : dict, optional
             Arguments to pass to the axis.scatter function
-        
+
         save_args : dict, optional
             Arguments to pass to the figure.savefig function
 
@@ -265,8 +279,12 @@ class Layout:
                     text=f"{row['station_name']}", xy=(row.x, row.y), fontsize=8
                 )
 
-        ax.set_xlabel(f"{'Relatives' if self.is_relative() else 'Geozentrisches'} $x$ in m")
-        ax.set_ylabel(f"{'Relatives' if self.is_relative() else 'Geozentrisches'} $y$ in m")
+        ax.set_xlabel(
+            f"{'Relatives' if self.is_relative() else 'Geozentrisches'} $x$ in m"
+        )
+        ax.set_ylabel(
+            f"{'Relatives' if self.is_relative() else 'Geozentrisches'} $y$ in m"
+        )
         # ax.set_title(f"Array Layout\n({self.cfg_path.split('/')[-1]})")
         ax.set_box_aspect(1)
 
