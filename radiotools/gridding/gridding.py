@@ -578,7 +578,10 @@ class Gridder:
 
         uvw = table(ms_path).getcol("UVW").T
 
-        cls.freq = table(ms_path + "SPECTRAL_WINDOW").getcol("CHAN_FREQ").T
+        try:
+            cls.freq = table(ms_path + "SPECTRAL_WINDOW").getcol("CHAN_FREQ").T
+        except Exception:
+            cls.freq = 230e9
 
         uvw = np.repeat(uvw[None], 1, axis=0)
         uu = uvw[:, :, 0]
