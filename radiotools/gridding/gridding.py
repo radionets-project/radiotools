@@ -192,8 +192,9 @@ class Gridder:
         self,
         crop=([None, None], [None, None]),
         rot90=0,
+        invert_x=False,
         plot_args={"cmap": "inferno", "norm": LogNorm(clip=True)},
-        colorbar_shrink=0.9,
+        colorbar_shrink=1,
         save_to=None,
         save_args={},
         fig=None,
@@ -239,8 +240,13 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
+        img = np.rot90(np.absolute(self.mask_real + self.mask_imag * 1j), rot90)
+
+        if invert_x:
+            img = np.fliplr(img)
+
         im = ax.imshow(
-            np.rot90(np.absolute(self.mask_real + self.mask_imag * 1j), rot90),
+            img,
             origin="lower",
             **plot_args,
         )
@@ -260,6 +266,7 @@ class Gridder:
         self,
         crop=([None, None], [None, None]),
         rot90=0,
+        invert_x=False,
         plot_args={"cmap": "coolwarm"},
         colorbar_shrink=0.9,
         save_to=None,
@@ -307,8 +314,13 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
+        img = np.rot90(np.angle(self.mask_real + self.mask_imag * 1j), rot90)
+
+        if invert_x:
+            img = np.fliplr(img)
+
         im = ax.imshow(
-            np.rot90(np.angle(self.mask_real + self.mask_imag * 1j), rot90),
+            img,
             origin="lower",
             **plot_args,
         )
@@ -334,6 +346,7 @@ class Gridder:
         crop=([None, None], [None, None]),
         exp=1,
         rot90=0,
+        invert_x=False,
         plot_args={"cmap": "inferno", "origin": "lower"},
         colorbar_shrink=1,
         save_to=None,
@@ -403,7 +416,12 @@ class Gridder:
 
         norm = None if exp == 1 else PowerNorm(gamma=exp)
 
-        im = ax.imshow(np.rot90(dirty_image, rot90), norm=norm, **plot_args)
+        img = np.rot90(dirty_image, rot90)
+
+        if invert_x:
+            img = np.fliplr(img)
+
+        im = ax.imshow(img, norm=norm, **plot_args)
         ax.set_xlabel("Pixel")
         ax.set_ylabel("Pixel")
         fig.colorbar(
