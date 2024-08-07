@@ -347,6 +347,7 @@ class Gridder:
         exp=1,
         rot90=0,
         invert_x=False,
+        img_multiplier=1,
         plot_args={"cmap": "inferno", "origin": "lower"},
         colorbar_shrink=1,
         save_to=None,
@@ -421,7 +422,7 @@ class Gridder:
         if invert_x:
             img = np.fliplr(img)
 
-        im = ax.imshow(img, norm=norm, **plot_args)
+        im = ax.imshow(img * img_multiplier, norm=norm, **plot_args)
         ax.set_xlabel("Pixel")
         ax.set_ylabel("Pixel")
         fig.colorbar(
@@ -549,13 +550,12 @@ class Gridder:
         vv = data["VV--"].T * c
 
         cls.freq = file[0].header["CRVAL4"]
-        stokes_i = np.reshape(
-            file[0].data["DATA"].T[:, 0:2][0, 0]
-            + file[0].data["DATA"].T[:, 0:2][1, 0] * 1j
-            + file[0].data["DATA"].T[:, 0:2][0, 1]
-            + file[0].data["DATA"].T[:, 0:2][1, 1] * 1j,
-            (file[0].data["DATA"].T.shape[6], 1),
-        )
+        stokes_i = np.array(
+            file[0].data["DATA"][..., 0, 0]
+            + file[0].data["DATA"][..., 0, 1] * 1j
+            + file[0].data["DATA"][..., 1, 0]
+            + file[0].data["DATA"][..., 1, 1] * 1j,
+        ).flatten()[:, None]
 
         return cls._create_attributes(uu, vv, stokes_i)
 
