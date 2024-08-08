@@ -86,9 +86,10 @@ class Gridder:
 
     def plot_ungridded_uv(
         self,
-        plot_args={"color": "royalblue", "s": 0.01},
+        plot_args=dict(color="royalblue", s=0.01),
         save_to=None,
         save_args={},
+        annotation=None,
         fig=None,
         ax=None,
     ):
@@ -106,6 +107,9 @@ class Gridder:
         save_args : str, optional
             The arguments for the savefig function
 
+        annotation : str, optional
+            The text to put into a label on the figure; None to deactivate
+
         fig : matplotlib.figure.Figure, optional
             A figure to put the plot into
 
@@ -120,6 +124,10 @@ class Gridder:
         ax.scatter(
             x=np.append(self.u, -self.u), y=np.append(self.v, -self.v), **plot_args
         )
+
+        if annotation is not None:
+            _plot_text(annotation, ax, (0.05, 0.95))
+
         ax.set_xlabel("$u$ in $\\lambda$")
         ax.set_ylabel("$v$ in $\\lambda$")
 
@@ -131,10 +139,16 @@ class Gridder:
     def plot_mask(
         self,
         crop=([None, None], [None, None]),
-        plot_args={"cmap": "inferno", "norm": LogNorm(clip=True)},
-        colorbar_shrink=0.7,
+        plot_args=dict(
+            cmap="inferno",
+            interpolation="none",
+            norm=LogNorm(clip=True),
+        ),
+        rot90=0,
+        colorbar_shrink=1,
         save_to=None,
         save_args={},
+        annotation=None,
         fig=None,
         ax=None,
     ):
@@ -147,7 +161,11 @@ class Gridder:
             The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
 
         plot_args : dict, optional
-            The arguments for the pyplot scatter plot of the uv tuples
+            The arguments for the pyplot scatter imshow of the uv mask
+
+        rot90: int, optional
+            The amount of times the image is supposed to be rotated by 90
+            degrees clockwise
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -157,6 +175,9 @@ class Gridder:
 
         save_args : str, optional
             The arguments for the savefig function
+
+        annotation : str, optional
+            The text to put into a label on the figure; None to deactivate
 
         fig : matplotlib.figure.Figure, optional
             A figure to put the plot into
@@ -174,7 +195,15 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        im0 = ax.imshow(self.mask, origin="lower", **plot_args)
+        im0 = ax.imshow(
+            self.mask,
+            origin="lower",
+            **plot_args,
+        )
+
+        if annotation is not None:
+            _plot_text(annotation, ax, (0.05, 0.95))
+
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
         ax.set_xlabel("Pixel")
@@ -191,12 +220,16 @@ class Gridder:
     def plot_mask_absolute(
         self,
         crop=([None, None], [None, None]),
+        plot_args=dict(
+            cmap="inferno",
+            norm=LogNorm(clip=True),
+            interpolation="none",
+        ),
         rot90=0,
-        invert_x=False,
-        plot_args={"cmap": "inferno", "norm": LogNorm(clip=True)},
         colorbar_shrink=1,
         save_to=None,
         save_args={},
+        annotation=None,
         fig=None,
         ax=None,
     ):
@@ -208,12 +241,12 @@ class Gridder:
         crop : tuple of arrays, optional
             The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
 
+        plot_args : dict, optional
+            The arguments for the pyplot imshow plot of the amplitude of the visibilities
+
         rot90: int, optional
             The amount of times the image is supposed to be rotated by 90
             degrees clockwise
-
-        plot_args : dict, optional
-            The arguments for the pyplot scatter plot of the uv tuples
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -223,6 +256,9 @@ class Gridder:
 
         save_args : str, optional
             The arguments for the savefig function
+
+        annotation : str, optional
+            The text to put into a label on the figure; None to deactivate
 
         fig : matplotlib.figure.Figure, optional
             A figure to put the plot into
@@ -240,16 +276,17 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        img = np.rot90(np.absolute(self.mask_real + self.mask_imag * 1j), rot90)
-
-        if invert_x:
-            img = np.fliplr(img)
+        img = np.absolute(self.mask_real + self.mask_imag * 1j)
 
         im = ax.imshow(
             img,
             origin="lower",
             **plot_args,
         )
+
+        if annotation is not None:
+            _plot_text(annotation, ax, (0.05, 0.95))
+
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
         ax.set_xlabel("Pixel")
@@ -265,12 +302,15 @@ class Gridder:
     def plot_mask_phase(
         self,
         crop=([None, None], [None, None]),
+        plot_args=dict(
+            cmap="coolwarm",
+            interpolation="none",
+        ),
         rot90=0,
-        invert_x=False,
-        plot_args={"cmap": "coolwarm"},
-        colorbar_shrink=0.9,
+        colorbar_shrink=1,
         save_to=None,
         save_args={},
+        annotation=None,
         fig=None,
         ax=None,
     ):
@@ -282,12 +322,12 @@ class Gridder:
         crop : tuple of arrays, optional
             The cutout of the plot to display (e.g. ([-10, 10], [-15, 15])
 
+        plot_args : dict, optional
+            The arguments for the pyplot imshow plot of the phase of the visibilities
+
         rot90: int, optional
             The amount of times the image is supposed to be rotated by 90
             degrees clockwise
-
-        plot_args : dict, optional
-            The arguments for the pyplot scatter plot of the uv tuples
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -297,6 +337,9 @@ class Gridder:
 
         save_args : str, optional
             The arguments for the savefig function
+
+        annotation : str, optional
+            The text to put into a label on the figure; None to deactivate
 
         fig : matplotlib.figure.Figure, optional
             A figure to put the plot into
@@ -314,16 +357,17 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        img = np.rot90(np.angle(self.mask_real + self.mask_imag * 1j), rot90)
-
-        if invert_x:
-            img = np.fliplr(img)
+        img = np.angle(self.mask_real + self.mask_imag * 1j)
 
         im = ax.imshow(
             img,
             origin="lower",
             **plot_args,
         )
+
+        if annotation is not None:
+            _plot_text(annotation, ax, (0.05, 0.95))
+
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
         ax.set_xlabel("Pixel")
@@ -347,11 +391,13 @@ class Gridder:
         exp=1,
         rot90=0,
         invert_x=False,
+        invert_y=False,
         img_multiplier=1,
-        plot_args={"cmap": "inferno", "origin": "lower"},
+        plot_args=dict(cmap="inferno", interpolation="none"),
         colorbar_shrink=1,
         save_to=None,
         save_args={},
+        annotation=None,
         fig=None,
         ax=None,
     ):
@@ -374,8 +420,17 @@ class Gridder:
             The amount of times the image is supposed to be rotated by 90
             degrees clockwise
 
+        invert_x: bool, optional
+            Whether to invert the x-axis of the image
+
+        invert_y: bool, optional
+            Whether to invert the y-axis of the image
+
+        img_multiplier: float, optional
+            The factor to multiply the values of the pixels with
+
         plot_args : dict, optional
-            The arguments for the pyplot scatter plot of the uv tuples
+            The arguments for the pyplot imshow plot of the dirty image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -385,6 +440,9 @@ class Gridder:
 
         save_args : str, optional
             The arguments for the savefig function
+
+        annotation : str, optional
+            The text to put into a label on the figure; None to deactivate
 
         fig : matplotlib.figure.Figure, optional
             A figure to put the plot into
@@ -422,14 +480,21 @@ class Gridder:
         if invert_x:
             img = np.fliplr(img)
 
-        im = ax.imshow(img * img_multiplier, norm=norm, **plot_args)
+        if invert_y:
+            img = np.flipud(img)
+
+        im = ax.imshow(img * img_multiplier, norm=norm, origin="lower", **plot_args)
+
+        if annotation is not None:
+            _plot_text(annotation, ax, (0.05, 0.95))
+
         ax.set_xlabel("Pixel")
         ax.set_ylabel("Pixel")
         fig.colorbar(
             im,
             ax=ax,
             shrink=colorbar_shrink,
-            label="$\\text{Flussdichte}\\text{ in }\\text{Jy/px}$",
+            label="Flussdichte in Jy/px",
         )
 
         if save_to is not None:
@@ -608,3 +673,21 @@ class Gridder:
         stokes_i = data[:, :, 0] + data[:, :, 1]
 
         return cls._create_attributes(uu, vv, stokes_i)
+
+
+def _plot_text(
+    text,
+    ax,
+    pos=(0, 1),
+    text_options=dict(fontsize=15),
+    bbox=dict(facecolor="lightgray", edgecolor="black", alpha=0.8, boxstyle="round"),
+):
+    textanchor = ax.get_window_extent()
+    ax.annotate(
+        text,
+        pos,
+        xycoords=textanchor,
+        va="top",
+        bbox=bbox,
+        **text_options,
+    )
