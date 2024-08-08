@@ -144,7 +144,8 @@ class Gridder:
             interpolation="none",
             norm=LogNorm(clip=True),
         ),
-        rot90=0,
+        rot90=1,
+        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -166,6 +167,9 @@ class Gridder:
         rot90: int, optional
             The amount of times the image is supposed to be rotated by 90
             degrees clockwise
+
+        invert_x: bool, optional
+            Whether to invert the x-axis of the image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -195,8 +199,13 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
+        img = self.mask
+            
+        if invert_x:
+            img = np.fliplr(img)
+            
         im0 = ax.imshow(
-            self.mask,
+            np.rot90(img, rot90),
             origin="lower",
             **plot_args,
         )
@@ -225,7 +234,8 @@ class Gridder:
             norm=LogNorm(clip=True),
             interpolation="none",
         ),
-        rot90=0,
+        rot90=1,
+        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -247,6 +257,9 @@ class Gridder:
         rot90: int, optional
             The amount of times the image is supposed to be rotated by 90
             degrees clockwise
+            
+        invert_x: bool, optional
+            Whether to invert the x-axis of the image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -278,8 +291,11 @@ class Gridder:
 
         img = np.absolute(self.mask_real + self.mask_imag * 1j)
 
+        if invert_x:
+            img = np.fliplr(img)
+        
         im = ax.imshow(
-            img,
+            np.rot90(img, rot90),
             origin="lower",
             **plot_args,
         )
@@ -306,7 +322,8 @@ class Gridder:
             cmap="coolwarm",
             interpolation="none",
         ),
-        rot90=0,
+        rot90=1,
+        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -328,6 +345,9 @@ class Gridder:
         rot90: int, optional
             The amount of times the image is supposed to be rotated by 90
             degrees clockwise
+
+        invert_x: bool, optional
+            Whether to invert the x-axis of the image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -359,8 +379,11 @@ class Gridder:
 
         img = np.angle(self.mask_real + self.mask_imag * 1j)
 
+        if invert_x:
+            img = np.fliplr(img)
+        
         im = ax.imshow(
-            img,
+            np.rot90(img),
             origin="lower",
             **plot_args,
         )
@@ -374,7 +397,10 @@ class Gridder:
         ax.set_ylabel("Pixel")
 
         cbar = fig.colorbar(
-            im, ax=ax, shrink=colorbar_shrink, label="Phasendifferenz in rad"
+            im,
+            ax=ax,
+            shrink=colorbar_shrink,
+            label="Phasendifferenz in rad",
         )
         cbar.set_ticks(np.arange(-np.pi, 3 / 2 * np.pi, np.pi / 2))
         cbar.set_ticklabels(["$-\\pi$", "$-\\pi/2$", "$0$", "$\\pi/2$", "$\\pi$"])
@@ -389,8 +415,8 @@ class Gridder:
         mode="real",
         crop=([None, None], [None, None]),
         exp=1,
-        rot90=0,
-        invert_x=False,
+        rot90=1,
+        invert_x=True,
         invert_y=False,
         img_multiplier=1,
         plot_args=dict(cmap="inferno", interpolation="none"),
