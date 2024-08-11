@@ -279,12 +279,8 @@ class Layout:
                     text=f"{row['station_name']}", xy=(row.x, row.y), fontsize=8
                 )
 
-        ax.set_xlabel(
-            f"{'Relative' if self.is_relative() else 'Geocentric'} $x$ in m"
-        )
-        ax.set_ylabel(
-            f"{'Relative' if self.is_relative() else 'Geocentric'} $y$ in m"
-        )
+        ax.set_xlabel(f"{'Relative' if self.is_relative() else 'Geocentric'} $x$ in m")
+        ax.set_ylabel(f"{'Relative' if self.is_relative() else 'Geocentric'} $y$ in m")
         ax.set_box_aspect(1)
 
         if save_to_file != "":
