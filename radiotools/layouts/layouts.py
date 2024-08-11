@@ -280,12 +280,11 @@ class Layout:
                 )
 
         ax.set_xlabel(
-            f"{'Relatives' if self.is_relative() else 'Geozentrisches'} $x$ in m"
+            f"{'Relative' if self.is_relative() else 'Geocentric'} $x$ in m"
         )
         ax.set_ylabel(
-            f"{'Relatives' if self.is_relative() else 'Geozentrisches'} $y$ in m"
+            f"{'Relative' if self.is_relative() else 'Geocentric'} $y$ in m"
         )
-        # ax.set_title(f"Array Layout\n({self.cfg_path.split('/')[-1]})")
         ax.set_box_aspect(1)
 
         if save_to_file != "":
