@@ -215,8 +215,8 @@ class Gridder:
 
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
-        ax.set_xlabel("Pixel")
-        ax.set_ylabel("Pixel")
+        ax.set_xlabel("pixels")
+        ax.set_ylabel("pixels")
         fig.colorbar(
             im0, ax=ax, shrink=colorbar_shrink, label="$(u,v)$ per pixel in 1 / px"
         )
@@ -305,8 +305,8 @@ class Gridder:
 
         ax.set_xlim(crop[0][0], crop[0][1])
         ax.set_ylim(crop[1][0], crop[1][1])
-        ax.set_xlabel("Pixel")
-        ax.set_ylabel("Pixel")
+        ax.set_xlabel("pixels")
+        ax.set_ylabel("pixels")
 
         fig.colorbar(im, ax=ax, shrink=colorbar_shrink, label="Intensity in a.u.")
 
