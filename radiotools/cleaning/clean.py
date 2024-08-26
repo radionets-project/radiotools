@@ -32,7 +32,7 @@ class WSClean:
 
         Notes
         -----
-        A config may look like the following:
+        A valid config may look like the following:
 
         >>> clean_params = {
         >>>     'multiscale': True,
@@ -44,7 +44,7 @@ class WSClean:
         >>>     'mf_weighting': False,
         >>>     'size': [1024, 1024],
         >>>     'scale': '0.1masec',
-        >>>     'pol': 'Q',
+        >>>     'pol': 'I',
         >>>     'niter': 5000000,
         >>>     'auto_threshold': 0.5,
         >>>     'auto_mask': 3,
