@@ -34,7 +34,7 @@ class WSClean:
         -----
         A valid config may look like the following:
 
-        >>> clean_params = {
+        >>> clean_config = {
         >>>     'multiscale': True,
         >>>     'mgain': 0.5,
         >>>     'file_name': 'path/to/measurement_set',
