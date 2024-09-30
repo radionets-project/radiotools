@@ -1,3 +1,4 @@
+import urllib
 import uuid
 from pathlib import Path
 
@@ -485,11 +486,11 @@ class Layout:
         cls = cls()
         cls.cfg_path = cfg_path
         cls.rel_to_site = rel_to_site
-        cls.x = df.iloc[:, 0].to_list()
-        cls.y = df.iloc[:, 1].to_list()
-        cls.z = df.iloc[:, 2].to_list()
-        cls.dish_dia = df.iloc[:, 3].to_list()
-        cls.names = df.iloc[:, 4].to_list()
+        cls.x = df["x"]
+        cls.y = df["y"]
+        cls.z = df["z"]
+        cls.dish_dia = df["dish_dia"]
+        cls.names = df["station_name"]
         cls.el_low = np.repeat(el_low, len(cls.x)) if np.isscalar(el_low) else el_low
         cls.el_high = (
             np.repeat(el_high, len(cls.x)) if np.isscalar(el_high) else el_high
@@ -498,11 +499,6 @@ class Layout:
         cls.altitude = (
             np.repeat(altitude, len(cls.x)) if np.isscalar(altitude) else altitude
         )
-
-        df.insert(5, "el_low", cls.el_low)
-        df.insert(6, "el_high", cls.el_high)
-        df.insert(7, "sefd", cls.sefd)
-        df.insert(8, "altitude", cls.altitude)
 
         return cls
 
@@ -539,19 +535,70 @@ class Layout:
                 "altitude": float,
             },
         )
-        df = df.rename(columns={"X": "x", "Y": "y", "Z": "z"})
+        df.columns = map(str.lower, df.columns)
+
         cls = cls()
-        cls.names = df.iloc[:, 0].to_list()
+        cls.names = df["station_name"]
         cls.cfg_path = cfg_path
         cls.rel_to_site = rel_to_site
-        cls.x = df.iloc[:, 1].to_list()
-        cls.y = df.iloc[:, 2].to_list()
-        cls.z = df.iloc[:, 3].to_list()
-        cls.dish_dia = df.iloc[:, 4].to_list()
-        cls.el_low = df.iloc[:, 5].to_list()
-        cls.el_high = df.iloc[:, 6].to_list()
-        cls.sefd = df.iloc[:, 7].to_list()
-        cls.altitude = df.iloc[:, 8].to_list()
+        cls.x = df["x"]
+        cls.y = df["y"]
+        cls.z = df["z"]
+        cls.dish_dia = df["dish_dia"]
+        cls.el_low = df["el_low"]
+        cls.el_high = df["el_high"]
+        cls.sefd = df["sefd"]
+        cls.altitude = df["altitude"]
+
+        return cls
+
+    @classmethod
+    def from_url(cls, url: str, rel_to_site=None) -> "Layout":
+        """Import a layout from a given URL.
+
+        Parameters
+        ----------
+        url : str
+            URL of the layout file.
+        rel_to_site : str, optional
+            The name of the site the coordinates are relative to.
+            Is ignored is `None` or empty or `fmt`. Has to be an
+            existing site for `astropy.coordinates.EarthLocation.of_site()`.
+            Default: None
+        """
+        data = []
+        for line in urllib.request.urlopen(url):
+            data.append(line.decode("utf-8").split())
+
+        df = pd.DataFrame(data)
+        df = df.rename(columns=df.iloc[0]).drop(df.index[0])
+        df.columns = map(str.lower, df.columns)
+        df = df.astype(
+            {
+                "station_name": str,
+                "x": float,
+                "y": float,
+                "z": float,
+                "dish_dia": float,
+                "el_low": float,
+                "el_high": float,
+                "sefd": float,
+                "altitude": float,
+            }
+        )
+
+        cls = cls()
+        cls.names = df["station_name"]
+        cls.cfg_path = url
+        cls.rel_to_site = rel_to_site
+        cls.x = df["x"]
+        cls.y = df["y"]
+        cls.z = df["z"]
+        cls.dish_dia = df["dish_dia"]
+        cls.el_low = df["el_low"]
+        cls.el_high = df["el_high"]
+        cls.sefd = df["sefd"]
+        cls.altitude = df["altitude"]
 
         return cls
 
@@ -567,22 +614,22 @@ def loc2itrf(cx, cy, cz, locx=0.0, locy=0.0, locz=0.0):
     Parameters
     ----------
     locx: array_like or float
-    The x-coordinate in relative coordinates
+        The x-coordinate in relative coordinates
 
     locy: array_like or float
-    The y-coordinate in relative coordinates
+        The y-coordinate in relative coordinates
 
     locz: array_like or float
-    The z-coordinate in relative coordinates
+        The z-coordinate in relative coordinates
 
     cx: float
-    The center's x-coordinate in WGS84 coordinates
+        The center's x-coordinate in WGS84 coordinates
 
     cy: float
-    The center's y-coordinate in WGS84 coordinates
+        The center's y-coordinate in WGS84 coordinates
 
     cz: float
-    The center's z-coordinate in WGS84 coordinates
+        The center's z-coordinate in WGS84 coordinates
 
     """
 
@@ -620,22 +667,22 @@ def itrf2loc(x, y, z, cx, cy, cz):
     Parameters
     ----------
     x: array_like or float
-    The x-coordinate in WGS84 coordinates
+        The x-coordinate in WGS84 coordinates
 
     y: array_like or float
-    The y-coordinate in WGS84 coordinates
+        The y-coordinate in WGS84 coordinates
 
     z: array_like or float
-    The z-coordinate in WGS84 coordinates
+        The z-coordinate in WGS84 coordinates
 
     cx: float
-    The center's x-coordinate in WGS84 coordinates
+        The center's x-coordinate in WGS84 coordinates
 
     cy: float
-    The center's y-coordinate in WGS84 coordinates
+        The center's y-coordinate in WGS84 coordinates
 
     cz: float
-    The center's z-coordinate in WGS84 coordinates
+        The center's z-coordinate in WGS84 coordinates
 
     """
 

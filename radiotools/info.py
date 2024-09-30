@@ -11,16 +11,6 @@ from packaging.requirements import Requirement
 
 __all__ = ["main"]
 
-_dependencies = sorted(
-    [
-        "astropy >=6.1.0",
-        "matplotlib ~=3.0",
-        "numpy ~=1.16",
-        "pyvisgen",
-        "matplotlib",
-    ]
-)
-
 
 @click.command()
 @click.option(

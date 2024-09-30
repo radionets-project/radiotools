@@ -32,10 +32,9 @@ dependencies = [
     "astropy >=6.1.0",
     "matplotlib ~=3.0",
     "numpy ~=1.16",
-    "pandas",
-    "pyvisgen",
-    "rich",
-    "casatools",
+    "pandas >=2.0",
+    "rich >=13.0",
+    "casatools ~=6.6",
 ]
 
 [project.optional-dependencies]
@@ -82,7 +81,5 @@ skip-magic-trailing-comma = false
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "pyvisgen",
     "radiotools",
-    "radionets"
 ]

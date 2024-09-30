@@ -6,11 +6,5 @@ You can install the necessary packages in a conda/mamba environment of your choi
 ```
 $ pip install -e .
 ```
-Note that it is recommended to install [radionets](https://github.com/radionets-project/radionets)
-and [pyvisgen](https://github.com/radionets-project/pyvisgen) first. The latter must be the `gpu` branch version and can be installed
-via
-```
-$ pip install https://github.com/radionets-project/pyvisgen/archive/gpu.zip
-```
-
-If you want to use features from the NRAO [CASAtools](https://pypi.org/project/casatools/) package, you must use a python 3.10 version.
+If you want to use features from the NRAO [CASAtools](https://pypi.org/project/casatools/) package,
+you must use a python 3.10 version.

@@ -14,7 +14,8 @@ from astropy.time import Time
 from rich.console import Console
 from rich.table import Table
 
-from pyvisgen.layouts import layouts
+from radiotools.layouts import Layout
+from radiotools.utils import get_array_names
 
 COLORS = [
     "#fd7f6f",
@@ -28,6 +29,9 @@ COLORS = [
     "#8bd3c7",
     "#b3d4ff",
 ]
+
+PYVISGEN = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
+PYVISGEN += "refs/heads/main/pyvisgen/layouts/"
 
 
 class SourceVisibility:
@@ -79,9 +83,9 @@ class SourceVisibility:
                 "Please either provide a valid target name or a RA/Dec tuple!"
             )
 
-        if isinstance(location, str) and location in layouts.get_array_names():
+        if isinstance(location, str) and location in get_array_names(PYVISGEN):
             self.name = location
-            self.array = layouts.get_array_layout(location)
+            self.array = Layout.from_url(PYVISGEN + location)
 
             self.location = EarthLocation.from_geocentric(
                 self.array.x * u.m, self.array.y * u.m, self.array.z * u.m
