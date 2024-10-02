@@ -74,35 +74,37 @@ class WSClean:
         if save_config:
             self._save_config(clean_config, save_config)
 
-        clean_config["name"] = clean_config.pop("file_name")
-        clean_config["data-column"] = clean_config.pop("data_column")
-        clean_config["auto-threshold"] = clean_config.pop("auto_threshold")
-        clean_config["auto-mask"] = clean_config.pop("auto_mask")
+        _clean_config = clean_config.copy()
 
-        if isinstance(clean_config["size"], int):
-            clean_config["size"] = [clean_config["size"]] * 2
+        _clean_config["name"] = _clean_config.pop("file_name")
+        _clean_config["data-column"] = _clean_config.pop("data_column")
+        _clean_config["auto-threshold"] = _clean_config.pop("auto_threshold")
+        _clean_config["auto-mask"] = _clean_config.pop("auto_mask")
 
-        if clean_config["mf_weighting"] is False:
-            del clean_config["mf_weighting"]
-            clean_config["no-mf-weighting"] = ""
+        if isinstance(_clean_config["size"], int):
+            _clean_config["size"] = [_clean_config["size"]] * 2
+
+        if _clean_config["mf_weighting"] is False:
+            del _clean_config["mf_weighting"]
+            _clean_config["no-mf-weighting"] = ""
         else:
-            clean_config["mf-weighting"] = ""
+            _clean_config["mf-weighting"] = ""
 
-        if clean_config["verbose"] is False:
-            del clean_config["verbose"]
-            clean_config["quiet"] = ""
+        if _clean_config["verbose"] is False:
+            del _clean_config["verbose"]
+            _clean_config["quiet"] = ""
         else:
-            del clean_config["verbose"]
+            del _clean_config["verbose"]
 
-        if clean_config["multiscale"] is False:
-            del clean_config["multiscale"]
+        if _clean_config["multiscale"] is False:
+            del _clean_config["multiscale"]
         else:
-            clean_config["multiscale"] = ""
+            _clean_config["multiscale"] = ""
 
-        self.clean_config = clean_config
+        self._clean_config = _clean_config
 
         if create_skymodel:
-            self.skymodel_kwargs = clean_config.copy()
+            self.skymodel_kwargs = _clean_config.copy()
             self.skymodel_kwargs["name"] += f"_{self.skymodel_kwargs['pol']}_skymodel"
             self.skymodel_kwargs["data-column"] = "DATA"
             self.skymodel_kwargs["auto-threshold"] = 1
@@ -129,10 +131,10 @@ class WSClean:
 
     def clean_image(self) -> None:
         """Cleans the image using WSClean."""
-        self.clean_config["name"] += "_" + self.clean_config["pol"]
+        self._clean_config["name"] += "_" + self._clean_config["pol"]
 
         wsclean_opts = "wsclean "
-        for key, val in self.clean_config.items():
+        for key, val in self._clean_config.items():
             if isinstance(val, list):
                 wsclean_opts += f"-{key} {val[0]} {val[1]} "
             else:
@@ -141,15 +143,15 @@ class WSClean:
         wsclean_opts += self.ms
         sp.run(wsclean_opts, shell=True)
 
-        print(f"Saved to {self.clean_config['name']}<...>.fits")
+        print(f"Saved to {self._clean_config['name']}<...>.fits")
 
-    def _save_config(self, clean_config: dict, output_file: bool | str | Path) -> None:
+    def _save_config(self, _clean_config: dict, output_file: bool | str | Path) -> None:
         """Saves the config if ``save_config`` is set to ``True``
         when initializing the class.
         """
         if not isinstance(output_file, (str, Path)):
-            output_file = Path(clean_config["file_name"]).name
-            output_file += f"_{clean_config['pol']}" + "_config.toml"
+            output_file = Path(_clean_config["file_name"]).name
+            output_file += f"_{_clean_config['pol']}" + "_config.toml"
 
         with open(output_file, "w") as toml_file:
-            toml.dump(clean_config, toml_file)
+            toml.dump(_clean_config, toml_file)
