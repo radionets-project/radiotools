@@ -1,0 +1,5 @@
+- Temporary fix for inversion and rotation problem of gridder
+- Fix: Loading FITS in gridder was using wrong columns which did not
+  allow other Stokes components than Stokes I to be loaded
+- Ungridded UV plot in Gridder uses correct values now and
+  uses correct unit for axis
