@@ -1,0 +1,2 @@
+- Add new class method ``from_url`` to ``radiotools.layouts.Layout``
+- Add new utility function that fetches layout names from an URL via http-request

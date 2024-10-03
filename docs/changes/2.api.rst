@@ -1,0 +1,2 @@
+- Add option to not show zeros in array layout plots in ``layouts.py``
+- Parameter restructuring in ``gridding.py`` and ``layouts.py``

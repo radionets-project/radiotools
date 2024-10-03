@@ -1,0 +1,1 @@
+Make print optional in ``radiotools.visibility.SourceVisibility`` class
