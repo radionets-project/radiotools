@@ -41,6 +41,7 @@ dependencies = [
 dev = [
     "pre-commit",
     "setuptools_scm[toml]",
+    "towncrier"
 ]
 
 all = [
