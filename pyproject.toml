@@ -35,6 +35,7 @@ dependencies = [
     "pandas >=2.0",
     "rich >=13.0",
     "casatools ~=6.6",
+    "requests",
 ]
 
 [project.optional-dependencies]
