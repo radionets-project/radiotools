@@ -9,5 +9,7 @@ dependencies:
   - numpy ~=1.16
   - pandas >=2.0
   - rich >=13.0
+  - requests
+  - bs4
   - pip:
     - casatools ~=6.6
