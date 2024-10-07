@@ -24,8 +24,8 @@ def test_source_visibility():
         print_optimal_date=False,
     )
 
-    sv.plot()
-    assert_num_figures()
+    with assert_num_figures():
+        sv.plot()
 
     dates = sv.get_optimal_date()
 
