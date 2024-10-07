@@ -36,6 +36,7 @@ dependencies = [
     "rich >=13.0",
     "casatools ~=6.6",
     "requests",
+    "bs4",
 ]
 
 [project.optional-dependencies]
