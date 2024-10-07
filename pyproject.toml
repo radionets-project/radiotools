@@ -35,6 +35,8 @@ dependencies = [
     "pandas >=2.0",
     "rich >=13.0",
     "casatools ~=6.6",
+    "requests",
+    "bs4",
 ]
 
 [project.optional-dependencies]
@@ -83,6 +85,12 @@ skip-magic-trailing-comma = false
 [tool.ruff.lint.isort]
 known-first-party = [
     "radiotools",
+]
+
+[tool.coverage.run]
+branch = true
+omit = [
+  "radiotools/_version.py"
 ]
 
 [tool.towncrier]

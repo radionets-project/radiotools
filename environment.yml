@@ -1,0 +1,16 @@
+name: radiotools-dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - astropy >=6.1.0
+  - matplotlib ~=3.0
+  - numpy ~=1.16
+  - pandas >=2.0
+  - rich >=13.0
+  - requests
+  - bs4
+  - towncrier
+  - pip:
+    - casatools ~=6.6
