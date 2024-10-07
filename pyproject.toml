@@ -87,6 +87,12 @@ known-first-party = [
     "radiotools",
 ]
 
+[tool.coverage.run]
+branch = true
+omit = [
+  "radiotools/_version.py"
+]
+
 [tool.towncrier]
     package = "radiotools"
     directory = "docs/changes"
