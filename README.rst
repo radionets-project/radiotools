@@ -9,10 +9,17 @@ radiotools |ci|
 
 Collection of tools for use in radio astronomy.
 
-## Installation
-You can install the necessary packages in a conda/mamba environment of your choice by executing
-```
-$ pip install -e .
-```
-If you want to use features from the NRAO [CASAtools](https://pypi.org/project/casatools/) package,
-you must use a python 3.10 version.
+
+Installation
+============
+
+*radiotools* can be installed via pip by calling
+
+.. code::
+
+  $ pip install -e .
+
+We recommend using a conda/mamba environment with python version ``<=3.11``.
+
+If you want to use features from the NRAO `*CASAtools* <https://pypi.org/project/casatools/>`_ package,
+you make sure you are using python 3.10 or 3.11.
