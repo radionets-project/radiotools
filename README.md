@@ -1,4 +1,12 @@
-# radiotools
+===============
+radiotools |ci|
+===============
+
+.. |ci| image:: https://github.com/radionets-project/radiotools/workflows/CI/badge.svg?branch=main
+    :target: https://github.com/radionets-project/radiotools/actions?query=workflow%3ACI+branch%3Amain
+    :alt: Test Status
+
+
 Collection of tools for use in radio astronomy.
 
 ## Installation
