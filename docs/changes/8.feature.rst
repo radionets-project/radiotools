@@ -1,0 +1,5 @@
+- Add analysis submodule
+  - Add ``radiotools.analysis.get_source_rms`` function
+  - Add ``radiotools.analysis.dynamic_range`` function that calculates the dynamic range as a function of the maximum pixel value of an image and the RMS of the source
+
+- Add ``rms`` function to ``radiotools.utils``
