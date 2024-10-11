@@ -1,10 +1,14 @@
-===============
-radiotools |ci|
-===============
+=========================
+radiotools |ci| |codecov|
+=========================
 
 .. |ci| image:: https://github.com/radionets-project/radiotools/actions/workflows/ci.yml/badge.svg?branch=main
     :target: https://github.com/radionets-project/radiotools/actions/workflows/ci.yml?branch=main
     :alt: Test Status
+
+.. |codecov| image:: https://codecov.io/github/radionets-project/radiotools/badge.svg
+    :target: https://codecov.io/github/radionets-project/radiotools
+    :alt: Code coverage
 
 
 Collection of tools for use in radio astronomy.
