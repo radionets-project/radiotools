@@ -5,6 +5,48 @@ import toml
 
 
 class WSClean:
+    """Wrapper class for WSClean.
+
+    Parameters
+    ----------
+    ms : str or Path
+        Path to the measurement set.
+    clean_config : dict or str or Path
+        Either a dict containing the wsclean options or
+        a path to a toml file containing the options.
+        See note.
+    create_skymodel : bool, optional
+        Whether to create a skymodel before cleaning the image.
+        Default: False.
+    save_config : bool or str or Path, optional
+        If True, save the config to a file relative to the file
+        this class is called from. If given a path, the config
+        is saved to that location instead. Default: False.
+
+    Notes
+    -----
+    A valid config may look like the following:
+
+    >>> clean_config = {
+    >>>     'multiscale': True,
+    >>>     'mgain': 0.5,
+    >>>     'file_name': 'path/to/measurement_set',
+    >>>     'data_column': 'DATA',
+    >>>     'gain': 0.03,
+    >>>     'weight': 'briggs 0',
+    >>>     'mf_weighting': False,
+    >>>     'size': [1024, 1024],
+    >>>     'scale': '0.1masec',
+    >>>     'pol': 'I',
+    >>>     'niter': 5000000,
+    >>>     'auto_threshold': 0.5,
+    >>>     'auto_mask': 3,
+    >>>     'padding': 1.3,
+    >>>     'mem': 30,
+    >>>     'verbose': True,
+    >>> }
+    """
+
     def __init__(
         self,
         ms: str | Path,
@@ -12,47 +54,6 @@ class WSClean:
         create_skymodel: bool = False,
         save_config: bool | str | Path = False,
     ) -> None:
-        """Wrapper class for WSClean.
-
-        Parameters
-        ----------
-        ms : str or Path
-            Path to the measurement set.
-        clean_config : dict or str or Path
-            Either a dict containing the wsclean options or
-            a path to a toml file containing the options.
-            See note.
-        create_skymodel : bool, optional
-            Whether to create a skymodel before cleaning the image.
-            Default: False.
-        save_config : bool or str or Path, optional
-            If True, save the config to a file relative to the file
-            this class is called from. If given a path, the config
-            is saved to that location instead. Default: False.
-
-        Notes
-        -----
-        A valid config may look like the following:
-
-        >>> clean_config = {
-        >>>     'multiscale': True,
-        >>>     'mgain': 0.5,
-        >>>     'file_name': 'path/to/measurement_set',
-        >>>     'data_column': 'DATA',
-        >>>     'gain': 0.03,
-        >>>     'weight': 'briggs 0',
-        >>>     'mf_weighting': False,
-        >>>     'size': [1024, 1024],
-        >>>     'scale': '0.1masec',
-        >>>     'pol': 'I',
-        >>>     'niter': 5000000,
-        >>>     'auto_threshold': 0.5,
-        >>>     'auto_mask': 3,
-        >>>     'padding': 1.3,
-        >>>     'mem': 30,
-        >>>     'verbose': True,
-        >>> }
-        """
         if not isinstance(clean_config, (dict, str, Path)):
             raise ValueError(
                 "Please provide EITHER a dict object or a path"
