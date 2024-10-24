@@ -72,6 +72,8 @@ html_static_path = ["_static"]
 
 html_file_suffix = ".html"
 
+html_css_files = ["radiotools.css"]
+
 
 html_theme_options = {
     "github_url": "https://github.com/radionets-project/radiotools",
