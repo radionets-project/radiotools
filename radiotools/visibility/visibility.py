@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from astropy.coordinates import AltAz, EarthLocation, SkyCoord
+from astropy.coordinates import AltAz, BaseCoordinateFrame, EarthLocation, SkyCoord
 from astropy.time import Time
 from rich.console import Console
 from rich.table import Table
@@ -45,26 +45,45 @@ class SourceVisibility:
         target name (ICRS).
     date : str or list[str]
         Date or start and end points of a range of dates.
-    location : str or astropy.coordinates.EarthLocation
+    location : str or :class:`astropy.coordinates.EarthLocation`, optional
         Name of an existing array layout included in pyvisgen,
-        a location, or astropy `EarthLocation` object of an
-        observatory or telescope.
-    obs_length: float
-        Observation length in hours.
-    frame : str, optional, default='icrs'
+        a location, or :class:`astropy.coordinates.EarthLocation`
+        object of an observatory or telescope. Default: ``None``
+    obs_length: float, optional
+        Observation length in hours. Default: ``None``
+    frame : str or :class:`astropy.coordinates.BaseCoordinateFrame`, optional
         Type of coordinate frame the source sky coordinates
-        should represent. Defaults to ICRS.
+        should represent. Defaults: ``'icrs'``
     """
 
     def __init__(
         self,
-        target: tuple or str,
-        date: str or list[str],
-        location: str or EarthLocation = None,
+        target: tuple | str,
+        date: str | list[str],
+        location: str | EarthLocation = None,
         obs_length: float = 4.0,
-        frame="icrs",
+        frame: str | BaseCoordinateFrame = "icrs",
         print_optimal_date: bool = False,
     ) -> None:
+        """Initializes the class with source and observation information.
+
+        Parameters
+        ----------
+        target : tuple or str
+            Tuple of RA/Dec coordinates or string of valid
+            target name (ICRS).
+        date : str or list[str]
+            Date or start and end points of a range of dates.
+        location : str or :class:`astropy.coordinates.EarthLocation`, optional
+            Name of an existing array layout included in pyvisgen,
+            a location, or :class:`astropy.coordinates.EarthLocation` object of an
+            observatory or telescope. Default: ``None``
+        obs_length: float, optional
+            Observation length in hours. Default: ``None``
+        frame : str or :class:`astropy.coordinates.BaseCoordinateFrame`, optional
+            Type of coordinate frame the source sky coordinates
+            should represent. Defaults: 'icrs'
+        """
         if isinstance(target, tuple):
             self.ra = u.Quantity(target[0], unit=u.deg)
             self.dec = u.Quantity(target[1], unit=u.deg)
