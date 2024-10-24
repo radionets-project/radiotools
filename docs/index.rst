@@ -15,6 +15,7 @@ Tools for Radio Astronomy (``radiotools``)
 **Useful links**:
 `Source Repository <https://github.com/radionets-project/radiotools>`__ |
 `Issue Tracker <https://github.com/radionets-project/radiotools/issues>`__ |
+`Pull Requests <https://github.com/radionets-project/radiotools/pulls>`__
 
 **License**: MIT
 
