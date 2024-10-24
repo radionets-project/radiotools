@@ -1,8 +1,8 @@
 .. _utils:
 
-***************************
-Utils (`~radiotools.utils`)
-***************************
+*******************************
+Utils (:mod:`radiotools.utils`)
+*******************************
 
 .. currentmodule:: radiotools.utils
 

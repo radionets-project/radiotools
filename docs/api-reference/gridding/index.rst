@@ -1,8 +1,8 @@
 .. _gridding:
 
-*********************************
-Gridding (`~radiotools.gridding`)
-*********************************
+*************************************
+Gridding (:mod:`radiotools.gridding`)
+*************************************
 
 .. currentmodule:: radiotools.gridding
 

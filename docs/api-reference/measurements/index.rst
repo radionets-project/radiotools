@@ -1,8 +1,8 @@
 .. _measurements:
 
-*****************************************
-Measurements (`~radiotools.measurements`)
-*****************************************
+*********************************************
+Measurements (:mod:`radiotools.measurements`)
+*********************************************
 
 .. currentmodule:: radiotools.measurements
 

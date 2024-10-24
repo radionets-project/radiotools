@@ -1,8 +1,8 @@
 .. _layouts:
 
-*******************************
-Layouts (`~radiotools.layouts`)
-*******************************
+***********************************
+Layouts (:mod:`radiotools.layouts`)
+***********************************
 
 .. currentmodule:: radiotools.layouts
 

@@ -1,8 +1,8 @@
 .. _visibility:
 
-*************************************
-Visibility (`~radiotools.visibility`)
-*************************************
+*****************************************
+Visibility (:mod:`radiotools.visibility`)
+*****************************************
 
 .. currentmodule:: radiotools.visibility
 

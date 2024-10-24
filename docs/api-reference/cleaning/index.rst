@@ -1,8 +1,8 @@
 .. _cleaning:
 
-***************************************
-Image Cleaning (`~radiotools.cleaning`)
-***************************************
+*******************************************
+Image Cleaning (:mod:`radiotools.cleaning`)
+*******************************************
 
 .. currentmodule:: radiotools.cleaning
 
