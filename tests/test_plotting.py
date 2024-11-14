@@ -97,6 +97,39 @@ class TestPlottingUtils:
 
         assert_raises(ValueError, px2radec, self._HEADER, unit="kiloarcsecond")
 
+    def test_px2radec_num_ticks(self):
+        from radiotools.plotting import px2radec
+
+        _xticklabels = [
+            "-102.40",
+            "-76.80",
+            "-51.20",
+            "-25.60",
+            "0.00",
+            "25.60",
+            "51.20",
+            "76.80",
+            "102.40",
+        ]
+        _yticklabels = [
+            "-102.40",
+            "-76.80",
+            "-51.20",
+            "-25.60",
+            "0.00",
+            "25.60",
+            "51.20",
+            "76.80",
+            "102.40",
+        ]
+
+        (_, _, _, _, xticklabels, yticklabels) = px2radec(
+            self._HEADER, num_ticks=(9, 9)
+        )
+
+        assert_array_equal(xticklabels, _xticklabels)
+        assert_array_equal(yticklabels, _yticklabels)
+
     def test_px2radec_axis(self):
         import matplotlib.pyplot as plt
 
