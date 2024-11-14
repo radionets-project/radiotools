@@ -44,3 +44,11 @@ class TestRMS:
         )
 
         assert_allclose(rms(a, axis=1), expected)
+
+    def test_input_ndim_0(self):
+        """Test input with ndim=0"""
+        a = np.int16(10)
+
+        expected = 10.0
+
+        assert rms(a) == expected
