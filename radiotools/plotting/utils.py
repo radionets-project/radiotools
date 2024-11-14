@@ -39,10 +39,12 @@ def px2radec(header, xlim=None, ylim=None, num_ticks=9, unit="mas", ax=None):
     xticklabels -= xshift
     yticklabels -= yshift
     xticklabels = [
-        f"{label * px_incr * _PREFIXES[unit][0]:.2f}" for label in xticklabels
+        f"{label * px_incr * _PREFIXES[unit][0]:.2f}" if label != 0 else "0.00"
+        for label in xticklabels
     ]
     yticklabels = [
-        f"{label * px_incr * _PREFIXES[unit][0]:.2f}" for label in yticklabels
+        f"{label * px_incr * _PREFIXES[unit][0]:.2f}" if label != 0 else "0.00"
+        for label in yticklabels
     ]
 
     if ax:
