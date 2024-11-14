@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from astropy.coordinates import AltAz, EarthLocation, SkyCoord
+from astropy.coordinates import AltAz, BaseCoordinateFrame, EarthLocation, SkyCoord
 from astropy.time import Time
 from rich.console import Console
 from rich.table import Table
@@ -37,18 +37,36 @@ PYVISGEN += "refs/heads/main/pyvisgen/layouts/"
 class SourceVisibility:
     """Plots the source visibility for a given location
     and time range.
+
+    Parameters
+    ----------
+    target : tuple or str
+        Tuple of RA/Dec coordinates or string of valid
+        target name (ICRS).
+    date : str or list[str]
+        Date or start and end points of a range of dates.
+    location : str or :class:`astropy.coordinates.EarthLocation`, optional
+        Name of an existing array layout included in pyvisgen,
+        a location, or :class:`astropy.coordinates.EarthLocation`
+        object of an observatory or telescope. Default: ``None``
+    obs_length: float, optional
+        Observation length in hours. Default: ``None``
+    frame : str or :class:`astropy.coordinates.BaseCoordinateFrame`, optional
+        Type of coordinate frame the source sky coordinates
+        should represent. Defaults: ``'icrs'``
     """
 
     def __init__(
         self,
-        target: tuple or str,
-        date: str or list[str],
-        location: str or EarthLocation = None,
+        target: tuple | str,
+        date: str | list[str],
+        location: str | EarthLocation = None,
         obs_length: float = 4.0,
-        frame="icrs",
+        frame: str | BaseCoordinateFrame = "icrs",
         print_optimal_date: bool = False,
     ) -> None:
-        """
+        """Initializes the class with source and observation information.
+
         Parameters
         ----------
         target : tuple or str
@@ -56,15 +74,15 @@ class SourceVisibility:
             target name (ICRS).
         date : str or list[str]
             Date or start and end points of a range of dates.
-        location : str or astropy.coordinates.EarthLocation
+        location : str or :class:`astropy.coordinates.EarthLocation`, optional
             Name of an existing array layout included in pyvisgen,
-            a location, or astropy `EarthLocation` object of an
-            observatory or telescope.
-        obs_length: float
-            Observation length in hours.
-        frame : str, optional, default='icrs'
+            a location, or :class:`astropy.coordinates.EarthLocation` object of an
+            observatory or telescope. Default: ``None``
+        obs_length: float, optional
+            Observation length in hours. Default: ``None``
+        frame : str or :class:`astropy.coordinates.BaseCoordinateFrame`, optional
             Type of coordinate frame the source sky coordinates
-            should represent. Defaults to ICRS.
+            should represent. Defaults: 'icrs'
         """
         if isinstance(target, tuple):
             self.ra = u.Quantity(target[0], unit=u.deg)
@@ -227,19 +245,21 @@ class SourceVisibility:
     def plot(self, figsize: tuple[int, int] = (10, 5), colors: list = None) -> tuple:
         """Plots the visibility of the source at the given
         time range. Also plots the positions of the sun and moon
-        if set to `True`.
+        if set to ``True``.
 
         Parameters
         ----------
-        figsize : tuple[int, int], optional, default=(10,5)
+        figsize : tuple[int, int], optional
             Figure size. Width, height in inches.
+            Default: (10, 5)
         colors : list, optional
             List of colors. If nothing provided a default
-            list of colors is used.
+            list of colors is used. Default: None
 
         Returns
         -------
-        tuple : Figure and axis objects.
+        tuple
+            Figure and axis objects.
         """
         if colors is None:
             colors = iter(COLORS)
@@ -290,7 +310,21 @@ class SourceVisibility:
 
         return max(0, delta)
 
-    def get_optimal_date(self, print_result=False):
+    def get_optimal_date(self, print_result: bool = False) -> list:
+        """Computes the best date to observe the target source.
+        Returns a list of three :class:`~pandas.Timestamp` where the
+        first and last are the best date :math:`\pm` `obs_length / 2`.
+
+        Parameters
+        ----------
+        print_result : bool, optional
+            If `True`, also prints the result. Default: `False`
+
+        Returns
+        -------
+        result : list
+            List of :class:`~pandas.Timestamp`.
+        """
         times = dict()
         t_range = namedtuple("t_range", ["start", "end"])
 
