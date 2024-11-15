@@ -8,7 +8,7 @@ build:
     python: "3.10"
   jobs:
     pre_create_environment:
-      - mkdir ~/.casa
+      - mkdir -p /home/docs/.casa/dat
 
 python:
   install:
