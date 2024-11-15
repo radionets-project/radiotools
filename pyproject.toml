@@ -66,6 +66,7 @@ docs = [
   "sphinx_automodapi",
   "sphinxcontrib-bibtex",
   "tomli; python_version < '3.11'",
+  "toml"
 ]
 
 [project.urls]
