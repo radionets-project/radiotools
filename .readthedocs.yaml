@@ -1,11 +1,14 @@
 version: 2
 
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   apt_packages:
     - graphviz
   tools:
     python: "3.10"
+  jobs:
+    pre_create_environment:
+      - mkdir ~/.casa
 
 python:
   install:
@@ -13,3 +16,6 @@ python:
       path: .
       extra_requirements:
         - docs
+
+sphinx:
+  configuration: docs/conf.py
