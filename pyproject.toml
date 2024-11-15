@@ -47,7 +47,24 @@ dev = [
 ]
 
 all = [
-    "radiotools[dev]"
+    "radiotools"
+]
+
+docs = [
+  "radiotools[all]",
+  "graphviz",
+  "ipython",
+  "jupyter",
+  "nbsphinx",
+  "notebook",
+  "numpydoc",
+  "pandas",
+  "pydata_sphinx_theme",
+  "pypandoc",
+  "sphinx",
+  "sphinx-design",
+  "sphinx_automodapi",
+  "sphinxcontrib-bibtex",
 ]
 
 [project.urls]
