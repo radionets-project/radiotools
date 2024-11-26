@@ -82,8 +82,8 @@ class WSClean:
         _clean_config["auto-threshold"] = _clean_config.pop("auto_threshold")
         _clean_config["auto-mask"] = _clean_config.pop("auto_mask")
 
-        # We need to handle the case if size is an int and not a list
-        # this assumes, however, that x- and y- size are the same
+        # We need to handle the case if size is an int and not a list.
+        # This assumes, however, that x- and y- size are the same
         if isinstance(_clean_config["size"], int):
             _clean_config["size"] = [_clean_config["size"]] * 2
 
