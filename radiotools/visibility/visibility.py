@@ -30,8 +30,11 @@ COLORS = [
     "#b3d4ff",
 ]
 
-PYVISGEN = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
-PYVISGEN += "refs/heads/main/pyvisgen/layouts/"
+PYVISGEN_LAYOUTS = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
+PYVISGEN_LAYOUTS += "refs/heads/main/pyvisgen/layouts/"
+PYVISGEN = (
+    "https://api.github.com/repos/radionets-project/pyvisgen/git/trees/main?recursive=1"
+)
 
 
 class SourceVisibility:
@@ -103,12 +106,10 @@ class SourceVisibility:
 
         if isinstance(location, str) and location in get_array_names(PYVISGEN):
             self.name = location
-            self.array = Layout.from_url(PYVISGEN + location + ".txt")
+            self.array = Layout.from_url(PYVISGEN_LAYOUTS + location + ".txt")
 
             self.location = EarthLocation.from_geocentric(
-                u.Quantity(self.array.x, unit=u.m),
-                u.Quantity(self.array.y, unit=u.m),
-                u.Quantity(self.array.z, unit=u.m),
+                self.array.x, self.array.y, self.array.z, unit=u.m
             )
 
         elif isinstance(location, str):

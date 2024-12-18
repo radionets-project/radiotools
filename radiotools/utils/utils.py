@@ -1,7 +1,8 @@
+import json
+
 import numpy as np
 import requests
 from astropy.io import fits
-from bs4 import BeautifulSoup
 from numpy.typing import ArrayLike
 
 
@@ -21,16 +22,13 @@ def get_array_names(url: str) -> list[str]:
         List of available layouts.
     """
     r = requests.get(url)
-    soup = BeautifulSoup(r.text, features="html.parser")
+    text = json.loads(r.text)
 
-    a_tags = soup.find_all("a")
-
-    layouts = []
-    for i in a_tags:
-        if ".txt" in str(i.get("href")):
-            layouts.append(i.get("aria-label").split(".txt")[0])
-
-    layouts = list(set(layouts))
+    layouts = [
+        t["path"].split(".txt")[0].split("/")[-1]
+        for t in text["tree"]
+        if "layouts" and ".txt" in t["path"]
+    ]
 
     return layouts
 
