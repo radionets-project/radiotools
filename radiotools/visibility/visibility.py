@@ -30,8 +30,11 @@ COLORS = [
     "#b3d4ff",
 ]
 
-PYVISGEN = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
-PYVISGEN += "refs/heads/main/pyvisgen/layouts/"
+PYVISGEN_LAYOUTS = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
+PYVISGEN_LAYOUTS += "refs/heads/main/pyvisgen/layouts/"
+PYVISGEN = (
+    "https://api.github.com/repos/radionets-project/pyvisgen/git/trees/main?recursive=1"
+)
 
 
 class SourceVisibility:
@@ -103,10 +106,10 @@ class SourceVisibility:
 
         if isinstance(location, str) and location in get_array_names(PYVISGEN):
             self.name = location
-            self.array = Layout.from_url(PYVISGEN + location)
+            self.array = Layout.from_url(PYVISGEN_LAYOUTS + location + ".txt")
 
             self.location = EarthLocation.from_geocentric(
-                self.array.x * u.m, self.array.y * u.m, self.array.z * u.m
+                self.array.x, self.array.y, self.array.z, unit=u.m
             )
 
         elif isinstance(location, str):
@@ -207,9 +210,12 @@ class SourceVisibility:
         text = "Solid lines indicate that the source\n"
         text += "is visible. The visibility window is\n"
         text += "limited to a range between 15 deg\n"
-        text += "and 85 deg. For array layouts with\n"
-        text += "more than 10 stations, only the first\n"
-        text += "station (ID 0) is shown."
+        text += "and 85 deg."
+
+        if self.location.size > 10:
+            text += " For array layouts with\n"
+            text += "more than 10 stations, only the first\n"
+            text += "station (ID 0) is shown."
 
         ax["B"].annotate(
             text,
