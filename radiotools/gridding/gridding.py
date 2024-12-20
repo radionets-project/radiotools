@@ -651,7 +651,7 @@ class Gridder:
         return cls._create_attributes(uu, vv, stokes_i)
 
     @classmethod
-    def from_ms(cls, ms_path, img_size, fov):
+    def from_ms(cls, ms_path, img_size, fov, desc_id=None):
         """
         Initializes the Gridder with a measurement which is saved in a NRAO CASA measurement set
 
@@ -665,6 +665,9 @@ class Gridder:
 
         fov: float
             The field of view (pixel size * image size) of the image in arcseconds
+
+        desc_id: int
+            The desc_id of the visibilites which should be gridded.
 
         """
 
@@ -683,9 +686,15 @@ class Gridder:
         cls.img_size = img_size
         cls.fov = fov * np.pi / (3600 * 180)
 
-        data = table(ms_path).getcol("DATA").T
+        tab = table(ms_path)
 
-        uvw = table(ms_path).getcol("UVW").T
+        if desc_id is not None:
+            mask = tab.getcol("DATA_DESC_ID") == desc_id
+            data = tab.getcol("DATA")[:, :, mask].T
+            uvw = tab.getcol("UVW")[:, mask].T
+        else:
+            data = tab.getcol("DATA").T
+            uvw = tab.getcol("UVW").T
 
         try:
             cls.freq = table(ms_path + "SPECTRAL_WINDOW").getcol("CHAN_FREQ").T
