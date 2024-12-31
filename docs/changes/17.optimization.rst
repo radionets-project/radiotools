@@ -1,0 +1,2 @@
+- Add test for source visibility altitude restrictions in `tests/test_source_visibility.py`
+- Fix typo in `utils.py`
