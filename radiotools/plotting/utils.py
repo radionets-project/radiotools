@@ -30,7 +30,7 @@ def px2radec(
         axis size is used. Default: ``None``
     num_ticks : int or tuple, optional
         Number of ticks on the axes. If given a tuple,
-        element 0 correponds to the number of ticks on the
+        element 0 corresponds to the number of ticks on the
         x-axis, while element 1 corresponds to the y-axis.
     unit : str, optional
         The unit of the ticks. Can be one of ``'microarcsecond'``,
