@@ -598,7 +598,7 @@ class Gridder:
         self.dirty_img_cmplx = np.fft.fftshift(
             np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))
         )
-        self.dirty_img = np.real(self.dirty_img_cmplx)[:, ::-1]
+        self.dirty_img = np.real(self.dirty_img_cmplx)[:, :]
 
         return self
 
