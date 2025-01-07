@@ -144,8 +144,6 @@ class Gridder:
             interpolation="none",
             norm=LogNorm(clip=True),
         ),
-        rot90=1,
-        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -201,11 +199,8 @@ class Gridder:
 
         img = self.mask
 
-        if invert_x:
-            img = np.fliplr(img)
-
         im0 = ax.imshow(
-            np.rot90(img, rot90),
+            img,
             origin="lower",
             **plot_args,
         )
@@ -234,8 +229,6 @@ class Gridder:
             norm=LogNorm(clip=True),
             interpolation="none",
         ),
-        rot90=1,
-        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -253,13 +246,6 @@ class Gridder:
 
         plot_args : dict, optional
             The arguments for the pyplot imshow plot of the amplitude of the visibilities
-
-        rot90: int, optional
-            The amount of times the image is supposed to be rotated by 90
-            degrees clockwise
-
-        invert_x: bool, optional
-            Whether to invert the x-axis of the image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -289,13 +275,10 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        img = np.absolute(self.mask_real + self.mask_imag * 1j)
-
-        if invert_x:
-            img = np.fliplr(img)
+        img = np.absolute(self.mask_real + self.mask_imag * 1j) 
 
         im = ax.imshow(
-            np.rot90(img, rot90),
+            img,
             origin="lower",
             **plot_args,
         )
@@ -319,11 +302,9 @@ class Gridder:
         self,
         crop=([None, None], [None, None]),
         plot_args=dict(
-            cmap="coolwarm",
+            cmap="RdBu",
             interpolation="none",
         ),
-        rot90=1,
-        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -341,13 +322,6 @@ class Gridder:
 
         plot_args : dict, optional
             The arguments for the pyplot imshow plot of the phase of the visibilities
-
-        rot90: int, optional
-            The amount of times the image is supposed to be rotated by 90
-            degrees clockwise
-
-        invert_x: bool, optional
-            Whether to invert the x-axis of the image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -377,13 +351,10 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        img = np.angle(self.mask_real + self.mask_imag * 1j)
-
-        if invert_x:
-            img = np.fliplr(img)
+        img = np.angle(self.mask_real + self.mask_imag * 1j) 
 
         im = ax.imshow(
-            np.rot90(img),
+            img,
             origin="lower",
             **plot_args,
         )
@@ -415,9 +386,6 @@ class Gridder:
         mode="real",
         crop=([None, None], [None, None]),
         exp=1,
-        rot90=1,
-        invert_x=True,
-        invert_y=False,
         img_multiplier=1,
         plot_args=dict(cmap="inferno", interpolation="none"),
         colorbar_shrink=1,
@@ -441,16 +409,6 @@ class Gridder:
 
         exp : float, optional
             The exponent for the power norm to apply to the plot
-
-        rot90: int, optional
-            The amount of times the image is supposed to be rotated by 90
-            degrees clockwise
-
-        invert_x: bool, optional
-            Whether to invert the x-axis of the image
-
-        invert_y: bool, optional
-            Whether to invert the y-axis of the image
 
         img_multiplier: float, optional
             The factor to multiply the values of the pixels with
@@ -501,13 +459,7 @@ class Gridder:
 
         norm = None if exp == 1 else PowerNorm(gamma=exp)
 
-        img = np.rot90(dirty_image, rot90)
-
-        if invert_x:
-            img = np.fliplr(img)
-
-        if invert_y:
-            img = np.flipud(img)
+        img = dirty_image
 
         im = ax.imshow(img * img_multiplier, norm=norm, origin="lower", **plot_args)
 
@@ -566,7 +518,7 @@ class Gridder:
                 np.append(-u.ravel(), u.ravel()),
                 np.append(-v.ravel(), v.ravel()),
                 np.append(real.ravel(), real.ravel()),
-                np.append(imag.ravel(), -imag.ravel()),
+                np.append(-imag.ravel(), imag.ravel()),
             ]
         )
 
@@ -596,9 +548,9 @@ class Gridder:
         self.mask_real = mask_real
         self.mask_imag = mask_imag
         self.dirty_img_cmplx = np.fft.fftshift(
-            np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))
+            np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag)) 
         )
-        self.dirty_img = np.real(self.dirty_img_cmplx)[:, :]
+        self.dirty_img = np.real(self.dirty_img_cmplx)
 
         return self
 
@@ -641,13 +593,17 @@ class Gridder:
         vv = data["VV--"].T * c
 
         cls.freq = file[0].header["CRVAL4"]
-        stokes_i = np.array(
-            file[0].data["DATA"][..., 0, 0]
-            + file[0].data["DATA"][..., 0, 1] * 1j
-            + file[0].data["DATA"][..., 1, 0]
-            + file[0].data["DATA"][..., 1, 1] * 1j,
-        ).flatten()[:, None]
+        # stokes_i = np.array(
+        #     file[0].data["DATA"][..., 0, 0]
+        #     + file[0].data["DATA"][..., 0, 1] * 1j
+        #     + file[0].data["DATA"][..., 1, 0]
+        #     + file[0].data["DATA"][..., 1, 1] * 1j,
+        # ).flatten()[:, None]
 
+        vis = file[0].data["DATA"]
+        stokes_i = (vis[..., 0, 0] + 1j * vis[..., 0, 1]).ravel()[:, None]
+
+        
         return cls._create_attributes(uu, vv, stokes_i)
 
     @classmethod
