@@ -548,7 +548,7 @@ class Gridder:
         return self
 
     @classmethod
-    def from_fits(cls, fits_path, img_size, fov):
+    def from_fits(cls, fits_path, img_size, fov, u_colname="UU", v_colname="VV"):
         """
         Initializes the Gridder with a measurement which is saved in a FITS file
 
@@ -562,6 +562,12 @@ class Gridder:
 
         fov : float
             The field of view (pixel size * image size) of the image in arcseconds
+
+        u_colname : str, optional
+            The column name of the column containing the u values
+
+        v_colname : str, optional
+            The column name of the column containing the v values
 
         """
 
@@ -582,8 +588,8 @@ class Gridder:
 
         data = file[0].data.T
 
-        uu = data["UU"].T * c
-        vv = data["VV"].T * c
+        uu = data[u_colname].T * c
+        vv = data[v_colname].T * c
 
         cls.freq = file[0].header["CRVAL4"]
 
