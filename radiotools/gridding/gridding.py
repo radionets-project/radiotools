@@ -162,13 +162,6 @@ class Gridder:
         plot_args : dict, optional
             The arguments for the pyplot scatter imshow of the uv mask
 
-        rot90: int, optional
-            The amount of times the image is supposed to be rotated by 90
-            degrees clockwise
-
-        invert_x: bool, optional
-            Whether to invert the x-axis of the image
-
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
 
@@ -528,8 +521,8 @@ class Gridder:
         delta = (N * delta_l) ** (-1)
 
         bins = (
-            np.arange(start=-(N / 2) * delta, stop=(N / 2 + 1) * delta, step=delta)
-            - delta / 2
+            np.arange(start=-((N - 1) / 2) * delta, stop=(N / 2 + 1) * delta, step=delta)
+            #- delta / 2
         )
 
         mask, *_ = np.histogram2d(samps[0], samps[1], bins=[bins, bins], density=False)
@@ -589,16 +582,10 @@ class Gridder:
 
         data = file[0].data.T
 
-        uu = data["UU--"].T * c
-        vv = data["VV--"].T * c
+        uu = data["UU"].T * c
+        vv = data["VV"].T * c
 
         cls.freq = file[0].header["CRVAL4"]
-        # stokes_i = np.array(
-        #     file[0].data["DATA"][..., 0, 0]
-        #     + file[0].data["DATA"][..., 0, 1] * 1j
-        #     + file[0].data["DATA"][..., 1, 0]
-        #     + file[0].data["DATA"][..., 1, 1] * 1j,
-        # ).flatten()[:, None]
 
         vis = file[0].data["DATA"]
         stokes_i = (vis[..., 0, 0] + 1j * vis[..., 0, 1]).ravel()[:, None]
