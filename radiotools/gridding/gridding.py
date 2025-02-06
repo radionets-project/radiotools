@@ -521,8 +521,8 @@ class Gridder:
         delta = (N * delta_l) ** (-1)
 
         bins = (
-            np.arange(start=-((N - 1) / 2) * delta, stop=(N / 2 + 1) * delta, step=delta)
-            #- delta / 2
+            np.arange(start=-(N / 2) * delta, stop=(N / 2 + 1) * delta, step=delta)
+            - delta / 2
         )
 
         mask, *_ = np.histogram2d(samps[0], samps[1], bins=[bins, bins], density=False)
