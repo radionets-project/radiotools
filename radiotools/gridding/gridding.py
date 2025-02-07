@@ -218,7 +218,7 @@ class Gridder:
         self,
         crop=([None, None], [None, None]),
         plot_args=dict(
-            cmap="inferno",
+            cmap="viridis",
             norm=LogNorm(clip=True),
             interpolation="none",
         ),
@@ -523,7 +523,8 @@ class Gridder:
         bins = (
             np.arange(start=-(N / 2) * delta, stop=(N / 2 + 1) * delta, step=delta)
             - delta / 2
-        )
+        )        
+
 
         mask, *_ = np.histogram2d(samps[0], samps[1], bins=[bins, bins], density=False)
         mask[mask == 0] = 1
@@ -594,7 +595,7 @@ class Gridder:
         cls.freq = file[0].header["CRVAL4"]
 
         vis = file[0].data["DATA"]
-        stokes_i = (vis[..., 0, 0] + 1j * vis[..., 0, 1]).ravel()[:, None]
+        stokes_i = ((vis[..., 0, 0] + 1j * vis[..., 0, 1]) + (vis[..., 1, 0] + 1j * vis[..., 1, 1])).ravel()[:, None]
 
         
         return cls._create_attributes(uu, vv, stokes_i)
