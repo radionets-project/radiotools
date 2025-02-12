@@ -268,7 +268,7 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        img = np.absolute(self.mask_real + self.mask_imag * 1j) 
+        img = np.absolute(self.mask_real + self.mask_imag * 1j)
 
         im = ax.imshow(
             img,
@@ -344,7 +344,7 @@ class Gridder:
         if ax is None:
             fig, ax = plt.subplots(layout="constrained")
 
-        img = np.angle(self.mask_real + self.mask_imag * 1j) 
+        img = np.angle(self.mask_real + self.mask_imag * 1j)
 
         im = ax.imshow(
             img,
@@ -517,14 +517,14 @@ class Gridder:
 
         N = self.img_size
 
-        delta_l = self.fov / N
-        delta = (N * delta_l) ** (-1)
+        delta = (self.fov) ** (-1)
 
-        bins = (
-            np.arange(start=-(N / 2) * delta, stop=(N / 2 + 1) * delta, step=delta)
-            - delta / 2
-        )        
-
+        bins = np.arange(
+            start=-(N / 2 + 1 / 2) * delta,
+            stop=(N / 2 + 1 / 2) * delta,
+            step=delta,
+            dtype=np.float128,
+        )
 
         mask, *_ = np.histogram2d(samps[0], samps[1], bins=[bins, bins], density=False)
         mask[mask == 0] = 1
@@ -542,7 +542,7 @@ class Gridder:
         self.mask_real = mask_real
         self.mask_imag = mask_imag
         self.dirty_img_cmplx = np.fft.fftshift(
-            np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag)) 
+            np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))
         )
         self.dirty_img = np.real(self.dirty_img_cmplx)
 
@@ -595,9 +595,11 @@ class Gridder:
         cls.freq = file[0].header["CRVAL4"]
 
         vis = file[0].data["DATA"]
-        stokes_i = ((vis[..., 0, 0] + 1j * vis[..., 0, 1]) + (vis[..., 1, 0] + 1j * vis[..., 1, 1])).ravel()[:, None]
+        stokes_i = (
+            (vis[..., 0, 0] + 1j * vis[..., 0, 1])
+            + (vis[..., 1, 0] + 1j * vis[..., 1, 1])
+        ).ravel()[:, None]
 
-        
         return cls._create_attributes(uu, vv, stokes_i)
 
     @classmethod
