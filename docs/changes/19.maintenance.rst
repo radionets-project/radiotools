@@ -1,0 +1,5 @@
+- Remove forced rotation and inversion in plots
+- Change binning of grid
+- Use `numpy.float128` to ensure numerical stability
+- Add column name optional parameters to FITS import (default now `UU`, `VV`)
+- Remove flip and invert in `create_attributes` method

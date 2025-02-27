@@ -144,8 +144,6 @@ class Gridder:
             interpolation="none",
             norm=LogNorm(clip=True),
         ),
-        rot90=1,
-        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -163,13 +161,6 @@ class Gridder:
 
         plot_args : dict, optional
             The arguments for the pyplot scatter imshow of the uv mask
-
-        rot90: int, optional
-            The amount of times the image is supposed to be rotated by 90
-            degrees clockwise
-
-        invert_x: bool, optional
-            Whether to invert the x-axis of the image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -201,11 +192,8 @@ class Gridder:
 
         img = self.mask
 
-        if invert_x:
-            img = np.fliplr(img)
-
         im0 = ax.imshow(
-            np.rot90(img, rot90),
+            img,
             origin="lower",
             **plot_args,
         )
@@ -230,12 +218,10 @@ class Gridder:
         self,
         crop=([None, None], [None, None]),
         plot_args=dict(
-            cmap="inferno",
+            cmap="viridis",
             norm=LogNorm(clip=True),
             interpolation="none",
         ),
-        rot90=1,
-        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -253,13 +239,6 @@ class Gridder:
 
         plot_args : dict, optional
             The arguments for the pyplot imshow plot of the amplitude of the visibilities
-
-        rot90: int, optional
-            The amount of times the image is supposed to be rotated by 90
-            degrees clockwise
-
-        invert_x: bool, optional
-            Whether to invert the x-axis of the image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -291,11 +270,8 @@ class Gridder:
 
         img = np.absolute(self.mask_real + self.mask_imag * 1j)
 
-        if invert_x:
-            img = np.fliplr(img)
-
         im = ax.imshow(
-            np.rot90(img, rot90),
+            img,
             origin="lower",
             **plot_args,
         )
@@ -319,11 +295,9 @@ class Gridder:
         self,
         crop=([None, None], [None, None]),
         plot_args=dict(
-            cmap="coolwarm",
+            cmap="RdBu",
             interpolation="none",
         ),
-        rot90=1,
-        invert_x=True,
         colorbar_shrink=1,
         save_to=None,
         save_args={},
@@ -341,13 +315,6 @@ class Gridder:
 
         plot_args : dict, optional
             The arguments for the pyplot imshow plot of the phase of the visibilities
-
-        rot90: int, optional
-            The amount of times the image is supposed to be rotated by 90
-            degrees clockwise
-
-        invert_x: bool, optional
-            Whether to invert the x-axis of the image
 
         colorbar_shrink : float, optional
             The shrink parameter for the colorbar
@@ -379,11 +346,8 @@ class Gridder:
 
         img = np.angle(self.mask_real + self.mask_imag * 1j)
 
-        if invert_x:
-            img = np.fliplr(img)
-
         im = ax.imshow(
-            np.rot90(img),
+            img,
             origin="lower",
             **plot_args,
         )
@@ -415,9 +379,6 @@ class Gridder:
         mode="real",
         crop=([None, None], [None, None]),
         exp=1,
-        rot90=1,
-        invert_x=True,
-        invert_y=False,
         img_multiplier=1,
         plot_args=dict(cmap="inferno", interpolation="none"),
         colorbar_shrink=1,
@@ -441,16 +402,6 @@ class Gridder:
 
         exp : float, optional
             The exponent for the power norm to apply to the plot
-
-        rot90: int, optional
-            The amount of times the image is supposed to be rotated by 90
-            degrees clockwise
-
-        invert_x: bool, optional
-            Whether to invert the x-axis of the image
-
-        invert_y: bool, optional
-            Whether to invert the y-axis of the image
 
         img_multiplier: float, optional
             The factor to multiply the values of the pixels with
@@ -501,13 +452,7 @@ class Gridder:
 
         norm = None if exp == 1 else PowerNorm(gamma=exp)
 
-        img = np.rot90(dirty_image, rot90)
-
-        if invert_x:
-            img = np.fliplr(img)
-
-        if invert_y:
-            img = np.flipud(img)
+        img = dirty_image
 
         im = ax.imshow(img * img_multiplier, norm=norm, origin="lower", **plot_args)
 
@@ -566,18 +511,19 @@ class Gridder:
                 np.append(-u.ravel(), u.ravel()),
                 np.append(-v.ravel(), v.ravel()),
                 np.append(real.ravel(), real.ravel()),
-                np.append(imag.ravel(), -imag.ravel()),
+                np.append(-imag.ravel(), imag.ravel()),
             ]
         )
 
         N = self.img_size
 
-        delta_l = self.fov / N
-        delta = (N * delta_l) ** (-1)
+        delta = (self.fov) ** (-1)
 
-        bins = (
-            np.arange(start=-(N / 2) * delta, stop=(N / 2 + 1) * delta, step=delta)
-            - delta / 2
+        bins = np.arange(
+            start=-(N / 2 + 1 / 2) * delta,
+            stop=(N / 2 + 1 / 2) * delta,
+            step=delta,
+            dtype=np.float128,
         )
 
         mask, *_ = np.histogram2d(samps[0], samps[1], bins=[bins, bins], density=False)
@@ -598,12 +544,12 @@ class Gridder:
         self.dirty_img_cmplx = np.fft.fftshift(
             np.fft.ifft2(np.fft.fftshift(mask_real + 1j * mask_imag))
         )
-        self.dirty_img = np.real(self.dirty_img_cmplx)[:, ::-1]
+        self.dirty_img = np.real(self.dirty_img_cmplx)
 
         return self
 
     @classmethod
-    def from_fits(cls, fits_path, img_size, fov):
+    def from_fits(cls, fits_path, img_size, fov, u_colname="UU", v_colname="VV"):
         """
         Initializes the Gridder with a measurement which is saved in a FITS file
 
@@ -617,6 +563,12 @@ class Gridder:
 
         fov : float
             The field of view (pixel size * image size) of the image in arcseconds
+
+        u_colname : str, optional
+            The column name of the column containing the u values
+
+        v_colname : str, optional
+            The column name of the column containing the v values
 
         """
 
@@ -637,16 +589,16 @@ class Gridder:
 
         data = file[0].data.T
 
-        uu = data["UU--"].T * c
-        vv = data["VV--"].T * c
+        uu = data[u_colname].T * c
+        vv = data[v_colname].T * c
 
         cls.freq = file[0].header["CRVAL4"]
-        stokes_i = np.array(
-            file[0].data["DATA"][..., 0, 0]
-            + file[0].data["DATA"][..., 0, 1] * 1j
-            + file[0].data["DATA"][..., 1, 0]
-            + file[0].data["DATA"][..., 1, 1] * 1j,
-        ).flatten()[:, None]
+
+        vis = file[0].data["DATA"]
+        stokes_i = (
+            (vis[..., 0, 0] + 1j * vis[..., 0, 1])
+            + (vis[..., 1, 0] + 1j * vis[..., 1, 1])
+        ).ravel()[:, None]
 
         return cls._create_attributes(uu, vv, stokes_i)
 
