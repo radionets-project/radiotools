@@ -9,6 +9,10 @@ readme = "README.rst"
 authors = [
     { name = "radionets-project developers" }
 ]
+maintainers = [
+  { name = "Anno Knierim", email = "anno.knierim@tu-dortmund.de" },
+  { name = "Tom Groß", email = "tom.gross@tu-dortmund.de" },
+]
 license = { text = "MIT" }
 classifiers = [
     "Intended Audience :: Science/Research",
