@@ -55,6 +55,8 @@ class SourceVisibility:
     frame : str or :class:`astropy.coordinates.BaseCoordinateFrame`, optional
         Type of coordinate frame the source sky coordinates
         should represent. Defaults: ``'icrs'``
+    print_optimal_date : bool, optional
+        Prints the optimal date to observe. Default: False
     """
 
     def __init__(
@@ -84,6 +86,8 @@ class SourceVisibility:
         frame : str or :class:`astropy.coordinates.BaseCoordinateFrame`, optional
             Type of coordinate frame the source sky coordinates
             should represent. Defaults: 'icrs'
+        print_optimal_date : bool, optional
+            Prints the optimal date to observe. Default: False
         """
         if isinstance(target, tuple):
             self.ra = u.Quantity(target[0], unit=u.deg)
@@ -192,38 +196,41 @@ class SourceVisibility:
         ax["B"].axis("off")
 
         # legend is plotted on axis "B"
-        handles, labels = ax["A"].get_legend_handles_labels()
-        ax["B"].legend(
-            ncols=2,
-            handles=handles,
-            labels=labels,
-            loc="upper left",
-            handlelength=4,
-            title="Telescope ID",
-        )
+        if self.legend:
+            handles, labels = ax["A"].get_legend_handles_labels()
+            ax["B"].legend(
+                ncols=2,
+                handles=handles,
+                labels=labels,
+                loc="upper left",
+                handlelength=4,
+                title="Telescope ID",
+            )
 
         # Text is drawn on axis "B"
         text_anchor = ax["B"].get_window_extent()
 
-        text = "Solid lines indicate that the source\n"
-        text += "is visible. The visibility window is\n"
-        text += "limited to a range between 15 deg\n"
-        text += "and 85 deg."
+        if self.descr_text:
+            text = "Solid lines indicate that the source\n"
+            text += "is visible. The visibility window is\n"
+            text += "limited to a range between 15 deg\n"
+            text += "and 85 deg."
 
-        if self.location.size > 10:
-            text += " For array layouts with\n"
-            text += "more than 10 stations, only the first\n"
-            text += "station (ID 0) is shown."
+            if self.location.size > 10:
+                text += " For array layouts with\n"
+                text += "more than 10 stations, only the first\n"
+                text += "station (ID 0) is shown."
 
-        ax["B"].annotate(
-            text,
-            (0.025, 0.025),
-            xycoords=text_anchor,
-            fontsize=12,
-            va="bottom",
-            ha="left",
-            color="#41424C",
-        )
+            ax["B"].annotate(
+                text,
+                (0.025, 0.025),
+                xycoords=text_anchor,
+                fontsize=12,
+                va="bottom",
+                ha="left",
+                color="#41424C",
+            )
+
         ax["B"].annotate(
             f"RA:\t{self.ra:.5f}\nDec:\t{self.dec:.5f}".expandtabs(),
             (0.025, 0.4),
@@ -246,7 +253,14 @@ class SourceVisibility:
                 color="#232023",
             )
 
-    def plot(self, figsize: tuple[int, int] = (10, 5), colors: list = None) -> tuple:
+    def plot(
+        self,
+        figsize: tuple[int, int] = (10, 5),
+        colors: list = COLORS,
+        *,
+        descr_text: bool = True,
+        legend: bool = True,
+    ) -> tuple:
         """Plots the visibility of the source at the given
         time range. Also plots the positions of the sun and moon
         if set to ``True``.
@@ -259,16 +273,21 @@ class SourceVisibility:
         colors : list, optional
             List of colors. If nothing provided a default
             list of colors is used. Default: None
+        descr_text : bool, optional
+            Whether to put a descriptive text next to the plot.
+            Default: True
+        legend : bool, optional
+            If True, show legend in the plot. Default: True
 
         Returns
         -------
         tuple
             Figure and axis objects.
         """
-        if colors is None:
-            colors = iter(COLORS)
-        else:
-            colors = iter(colors)
+        self.descr_text = descr_text
+        self.legend = legend
+
+        colors = iter(colors)
 
         fig, ax = plt.subplot_mosaic(
             "AB",
