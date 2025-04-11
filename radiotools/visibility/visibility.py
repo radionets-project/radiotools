@@ -32,9 +32,7 @@ COLORS = [
 
 PYVISGEN_LAYOUTS = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
 PYVISGEN_LAYOUTS += "refs/heads/main/pyvisgen/layouts/"
-PYVISGEN = (
-    "https://api.github.com/repos/radionets-project/pyvisgen/git/trees/main?recursive=1"
-)
+PYVISGEN = "https://github.com/radionets-project/pyvisgen/blob/main/pyvisgen/layouts/"
 
 
 class SourceVisibility:
