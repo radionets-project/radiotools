@@ -140,12 +140,13 @@ class SourceVisibility:
 
         if min_alt > max_alt:
             raise ValueError(
-                "The provided minimum altitude must be smaller then the maximum altitude!"
+                "Expected 'min_alt' to be smaller than 'max_alt', but got "
+                f"min_alt = {min_alt} and max_alt = {max_alt}."
             )
 
         if min_alt < 0 or min_alt > 90 or max_alt < 0 or max_alt > 90:
             raise ValueError(
-                "The minimum and maximum altitude must be in the range of 0 to 90 degrees!"
+                "Expected 'min_alt' and 'max_alt' to be between 0 and 90 degrees."
             )
 
         self.min_alt = min_alt
@@ -387,6 +388,12 @@ class SourceVisibility:
                 self.dates[idx_max] + delta,
             ]
 
+        # Reindex times in case a key was skipped due to alt check.
+        # This would be the case if, e.g. key 0 and 3  did not pass
+        # the check resulting in times = {1: ..., 2: ..., 4: ...}.
+        # This reindexing then creates times = {0: ..., 1: ..., 2: ...}.
+        times = dict(enumerate(times.values()))
+
         dt = np.zeros([len(times), len(times)])
         for i, key_i in enumerate(times):
             for j, key_j in enumerate(times):
@@ -403,11 +410,12 @@ class SourceVisibility:
 
         if dt.sum(axis=0).size == 0:
             raise ValueError(
-                "The source is not visible with the chosen parameters, "
-                "so no optimal date could be determined!"
+                "The source is not visible with the chosen parameters. "
+                "Radiotools was not able to determine the optimal "
+                "observation date!"
             )
 
-        result = times[np.argmax(dt.sum(axis=0))]
+        result = times[int(np.argmax(dt.sum(axis=0)))]
 
         if print_result:
             print("")
