@@ -66,6 +66,8 @@ class SourceVisibility:
         location: str | EarthLocation = None,
         obs_length: float = 4.0,
         frame: str | BaseCoordinateFrame = "icrs",
+        min_alt: float = 15.0,
+        max_alt: float = 85.0,
         print_optimal_date: bool = False,
     ) -> None:
         """Initializes the class with source and observation information.
@@ -86,10 +88,18 @@ class SourceVisibility:
         frame : str or :class:`astropy.coordinates.BaseCoordinateFrame`, optional
             Type of coordinate frame the source sky coordinates
             should represent. Defaults: 'icrs'
-        print_optimal_date : bool, optional
-            Prints the optimal date to observe. Default: False
+        min_alt : float, optional
+            The minimum altitude of the source (in degrees) above the horizon to
+            be determined as visible. Default: 15.0
+        max_alt : float, optional
+            The maximum altitude of the source (in degrees) above the horizon to
+            be determined as visible. Default: 85.0
+        print_optimal_date: bool, optional
+            If `True` prints the optimal date for the observation. Default: ``False``
         """
-        if isinstance(target, tuple):
+        if isinstance(target, tuple) or (
+            isinstance(target, np.ndarray) and target.size == 2
+        ):
             self.ra = u.Quantity(target[0], unit=u.deg)
             self.dec = u.Quantity(target[1], unit=u.deg)
             self.source = SkyCoord(self.ra, self.dec, frame=frame)
@@ -127,6 +137,19 @@ class SourceVisibility:
 
         self.date = date
         self.obs_length = obs_length
+
+        if min_alt > max_alt:
+            raise ValueError(
+                "The provided minimum altitude must be smaller then the maximum altitude!"
+            )
+
+        if min_alt < 0 or min_alt > 90 or max_alt < 0 or max_alt > 90:
+            raise ValueError(
+                "The minimum and maximum altitude must be in the range of 0 to 90 degrees!"
+            )
+
+        self.min_alt = min_alt
+        self.max_alt = max_alt
 
         self._get_dates()
         self._get_pos()
@@ -213,8 +236,8 @@ class SourceVisibility:
         if self.descr_text:
             text = "Solid lines indicate that the source\n"
             text += "is visible. The visibility window is\n"
-            text += "limited to a range between 15 deg\n"
-            text += "and 85 deg."
+            text += f"limited to a range between {self.min_alt} deg\n"
+            text += f"and {self.max_alt} deg."
 
             if self.location.size > 10:
                 text += " For array layouts with\n"
@@ -300,7 +323,8 @@ class SourceVisibility:
             color = next(colors)
 
             mask = np.logical_and(
-                source_pos.alt > 15 * u.deg, 85 * u.deg > source_pos.alt
+                source_pos.alt > self.min_alt * u.deg,
+                self.max_alt * u.deg > source_pos.alt,
             )
             visible = source_pos.alt.copy()
             visible.value[~mask] = np.nan
@@ -353,7 +377,7 @@ class SourceVisibility:
 
         for key, val in self.source_pos.items():
             maximum = np.max(val.alt)
-            if maximum > 85 * u.deg or maximum < 15 * u.deg:
+            if maximum > self.max_alt * u.deg or maximum < self.min_alt * u.deg:
                 continue
             idx_max = np.argmax(val.alt)
             delta = datetime.timedelta(hours=self.obs_length / 2)
@@ -376,6 +400,12 @@ class SourceVisibility:
                 )
 
                 dt[i, j] = self._time_delta(r1, r2)
+
+        if dt.sum(axis=0).size == 0:
+            raise ValueError(
+                "The source is not visible with the chosen parameters, "
+                "so no optimal date could be determined!"
+            )
 
         result = times[np.argmax(dt.sum(axis=0))]
 

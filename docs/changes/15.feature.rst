@@ -1,0 +1,1 @@
+- Added `min_alt` and `max_alt` parameters to be able to adapt to simulation or telescope altitude restrictions.

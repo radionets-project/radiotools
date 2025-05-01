@@ -1,0 +1,1 @@
+Fix bug in ``radiotools.cleaning.WSClean`` that handled ``mf-weighting`` flag incorrectly

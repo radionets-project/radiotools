@@ -1,0 +1,1 @@
+- Update maintainers of the package

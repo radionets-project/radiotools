@@ -82,21 +82,35 @@ class WSClean:
         _clean_config["auto-threshold"] = _clean_config.pop("auto_threshold")
         _clean_config["auto-mask"] = _clean_config.pop("auto_mask")
 
+        # We need to handle the case if size is an int and not a list.
+        # This assumes, however, that x- and y- size are the same
         if isinstance(_clean_config["size"], int):
             _clean_config["size"] = [_clean_config["size"]] * 2
 
+        # mf-weighting and no-mf-weighting are flags without arguments.
+        # Since the wrapper only takes the bool mf_weighting as input,
+        # we have to handle both cases and pass the respective WSClean
+        # flags with an empty string as "argument".
         if _clean_config["mf_weighting"] is False:
             del _clean_config["mf_weighting"]
             _clean_config["no-mf-weighting"] = ""
         else:
+            del _clean_config["mf_weighting"]
             _clean_config["mf-weighting"] = ""
 
+        # Same as with mf-weighting, WSClean has two flags -- verbose
+        # and quiet -- to handle output during cleaning. The wrapper
+        # only takes the bool verbose as input, as such we have to
+        # handle both cases.
         if _clean_config["verbose"] is False:
             del _clean_config["verbose"]
             _clean_config["quiet"] = ""
         else:
             del _clean_config["verbose"]
 
+        # multiscale is another case of a flag without any arguments.
+        # As such, we have to either delete the key and value pair,
+        # or replace the bool with an empty string.
         if _clean_config["multiscale"] is False:
             del _clean_config["multiscale"]
         else:
