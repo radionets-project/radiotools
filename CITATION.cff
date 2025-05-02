@@ -10,6 +10,8 @@ authors:
 - family-names: "Schmitz"
   given-names: "Kevin"
   oricd: "https://orcid.org/0000-0002-9883-4454"
-title:radionets-project/radiotools: v0.1.2
+title: "radionets-project/radiotools: v0.1.2"
 version: v0.1.2
+doi: 10.5281/zenodo.15322218
 date-released: 2025-05-02
+url: "https://github.com/radionets-project/radiotools"
