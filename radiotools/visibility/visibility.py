@@ -30,8 +30,9 @@ COLORS = [
     "#b3d4ff",
 ]
 
-PYVISGEN = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
-PYVISGEN += "refs/heads/main/pyvisgen/layouts/"
+PYVISGEN_LAYOUTS = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
+PYVISGEN_LAYOUTS += "refs/heads/main/pyvisgen/layouts/"
+PYVISGEN = "https://github.com/radionets-project/pyvisgen/blob/main/pyvisgen/layouts/"
 
 
 class SourceVisibility:
@@ -54,6 +55,8 @@ class SourceVisibility:
     frame : str or :class:`astropy.coordinates.BaseCoordinateFrame`, optional
         Type of coordinate frame the source sky coordinates
         should represent. Defaults: ``'icrs'``
+    print_optimal_date : bool, optional
+        Prints the optimal date to observe. Default: False
     """
 
     def __init__(
@@ -115,10 +118,10 @@ class SourceVisibility:
 
         if isinstance(location, str) and location in get_array_names(PYVISGEN):
             self.name = location
-            self.array = Layout.from_url(PYVISGEN + location)
+            self.array = Layout.from_url(PYVISGEN_LAYOUTS + location + ".txt")
 
             self.location = EarthLocation.from_geocentric(
-                self.array.x * u.m, self.array.y * u.m, self.array.z * u.m
+                self.array.x, self.array.y, self.array.z, unit=u.m
             )
 
         elif isinstance(location, str):
@@ -137,12 +140,13 @@ class SourceVisibility:
 
         if min_alt > max_alt:
             raise ValueError(
-                "The provided minimum altitude must be smaller then the maximum altitude!"
+                "Expected 'min_alt' to be smaller than 'max_alt', but got "
+                f"min_alt = {min_alt} and max_alt = {max_alt}."
             )
 
         if min_alt < 0 or min_alt > 90 or max_alt < 0 or max_alt > 90:
             raise ValueError(
-                "The minimum and maximum altitude must be in the range of 0 to 90 degrees!"
+                "Expected 'min_alt' and 'max_alt' to be between 0 and 90 degrees."
             )
 
         self.min_alt = min_alt
@@ -216,35 +220,41 @@ class SourceVisibility:
         ax["B"].axis("off")
 
         # legend is plotted on axis "B"
-        handles, labels = ax["A"].get_legend_handles_labels()
-        ax["B"].legend(
-            ncols=2,
-            handles=handles,
-            labels=labels,
-            loc="upper left",
-            handlelength=4,
-            title="Telescope ID",
-        )
+        if self.legend:
+            handles, labels = ax["A"].get_legend_handles_labels()
+            ax["B"].legend(
+                ncols=2,
+                handles=handles,
+                labels=labels,
+                loc="upper left",
+                handlelength=4,
+                title="Telescope ID",
+            )
 
         # Text is drawn on axis "B"
         text_anchor = ax["B"].get_window_extent()
 
-        text = "Solid lines indicate that the source\n"
-        text += "is visible. The visibility window is\n"
-        text += f"limited to a range between {self.min_alt} deg\n"
-        text += f"and {self.max_alt} deg. For array layouts with\n"
-        text += "more than 10 stations, only the first\n"
-        text += "station (ID 0) is shown."
+        if self.descr_text:
+            text = "Solid lines indicate that the source\n"
+            text += "is visible. The visibility window is\n"
+            text += f"limited to a range between {self.min_alt} deg\n"
+            text += f"and {self.max_alt} deg."
 
-        ax["B"].annotate(
-            text,
-            (0.025, 0.025),
-            xycoords=text_anchor,
-            fontsize=12,
-            va="bottom",
-            ha="left",
-            color="#41424C",
-        )
+            if self.location.size > 10:
+                text += " For array layouts with\n"
+                text += "more than 10 stations, only the first\n"
+                text += "station (ID 0) is shown."
+
+            ax["B"].annotate(
+                text,
+                (0.025, 0.025),
+                xycoords=text_anchor,
+                fontsize=12,
+                va="bottom",
+                ha="left",
+                color="#41424C",
+            )
+
         ax["B"].annotate(
             f"RA:\t{self.ra:.5f}\nDec:\t{self.dec:.5f}".expandtabs(),
             (0.025, 0.4),
@@ -267,7 +277,14 @@ class SourceVisibility:
                 color="#232023",
             )
 
-    def plot(self, figsize: tuple[int, int] = (10, 5), colors: list = None) -> tuple:
+    def plot(
+        self,
+        figsize: tuple[int, int] = (10, 5),
+        colors: list = COLORS,
+        *,
+        descr_text: bool = True,
+        legend: bool = True,
+    ) -> tuple:
         """Plots the visibility of the source at the given
         time range. Also plots the positions of the sun and moon
         if set to ``True``.
@@ -280,16 +297,21 @@ class SourceVisibility:
         colors : list, optional
             List of colors. If nothing provided a default
             list of colors is used. Default: None
+        descr_text : bool, optional
+            Whether to put a descriptive text next to the plot.
+            Default: True
+        legend : bool, optional
+            If True, show legend in the plot. Default: True
 
         Returns
         -------
         tuple
             Figure and axis objects.
         """
-        if colors is None:
-            colors = iter(COLORS)
-        else:
-            colors = iter(colors)
+        self.descr_text = descr_text
+        self.legend = legend
+
+        colors = iter(colors)
 
         fig, ax = plt.subplot_mosaic(
             "AB",
@@ -366,6 +388,12 @@ class SourceVisibility:
                 self.dates[idx_max] + delta,
             ]
 
+        # Reindex times in case a key was skipped due to alt check.
+        # This would be the case if, e.g. key 0 and 3  did not pass
+        # the check resulting in times = {1: ..., 2: ..., 4: ...}.
+        # This reindexing then creates times = {0: ..., 1: ..., 2: ...}.
+        times = dict(enumerate(times.values()))
+
         dt = np.zeros([len(times), len(times)])
         for i, key_i in enumerate(times):
             for j, key_j in enumerate(times):
@@ -382,11 +410,12 @@ class SourceVisibility:
 
         if dt.sum(axis=0).size == 0:
             raise ValueError(
-                "The source is not visible with the chosen parameters, "
-                "so no optimal date could be determined!"
+                "The source is not visible with the chosen parameters. "
+                "Radiotools was not able to determine the optimal "
+                "observation date!"
             )
 
-        result = times[np.argmax(dt.sum(axis=0))]
+        result = times[int(np.argmax(dt.sum(axis=0)))]
 
         if print_result:
             print("")
