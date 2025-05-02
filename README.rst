@@ -1,6 +1,10 @@
 =========================
-radiotools |ci| |codecov|
+radiotools |zenodo| |ci| |codecov|
 =========================
+
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.15322218.svg
+  :target: https://doi.org/10.5281/zenodo.15322218
+  :alt: 10.5281/zenodo.15322218
 
 .. |ci| image:: https://github.com/radionets-project/radiotools/actions/workflows/ci.yml/badge.svg?branch=main
     :target: https://github.com/radionets-project/radiotools/actions/workflows/ci.yml?branch=main
