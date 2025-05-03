@@ -34,6 +34,17 @@ PYVISGEN_LAYOUTS = "https://raw.githubusercontent.com/radionets-project/pyvisgen
 PYVISGEN_LAYOUTS += "refs/heads/main/pyvisgen/layouts/"
 PYVISGEN = "https://github.com/radionets-project/pyvisgen/blob/main/pyvisgen/layouts/"
 
+LOCATIONS = [
+    "alma",
+    "alma_dsharp",
+    "dsa2000W",
+    "dsa2000_31b",
+    "eht",
+    "meerkat",
+    "vla",
+    "vlba",
+]
+
 
 class SourceVisibility:
     """Plots the source visibility for a given location
@@ -116,7 +127,9 @@ class SourceVisibility:
                 "Please either provide a valid target name or a RA/Dec tuple!"
             )
 
-        if isinstance(location, str) and location in get_array_names(PYVISGEN):
+        if isinstance(location, str) and (
+            (location in get_array_names(PYVISGEN)) or (location in LOCATIONS)
+        ):
             self.name = location
             self.array = Layout.from_url(PYVISGEN_LAYOUTS + location + ".txt")
 
