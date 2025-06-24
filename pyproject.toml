@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=64", "setuptools_scm[toml]>=8"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "radiotools"
@@ -46,15 +46,26 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit",
-    "setuptools_scm[toml]",
     "towncrier",
-    {include-group = "docs"}
+    {include-group = "docs"},
+    {include-group = "tests"},
+]
+
+tests = [
+  "coverage!=6.3.0",
+  "h5py",
+  "pytest >= 7.0",
+  "pytest-cov",
+  "pytest-xdist",
+  "restructuredtext-lint",
+  "tomli",
 ]
 
 docs = [
   "graphviz",
   "ipython",
   "jupyter",
+  "matplotlib",
   "nbsphinx",
   "notebook",
   "numpydoc",
@@ -75,11 +86,14 @@ repository = "https://github.com/radionets-project/radiotools"
 radiotools-info = "radiotools.info:main"
 radiotools-vis = "radiotools.cli_tools.vis:main"
 
-[tool.setuptools_scm]
-write_to = "radiotools/_version.py"
+[tool.hatch.version]
+source = "vcs"
 
-[tool.setuptools.packages.find]
-where = ["."]
+[tool.hatch.build.hooks.vcs]
+version-file = "radiotools/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
 
 [tool.ruff]
 target-version = "py310"
