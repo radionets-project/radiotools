@@ -43,19 +43,15 @@ dependencies = [
     "bs4",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pre-commit",
     "setuptools_scm[toml]",
     "towncrier"
-]
-
-all = [
-    "radiotools"
+    {include-group = "docs"}
 ]
 
 docs = [
-  "radiotools[all]",
   "graphviz",
   "ipython",
   "jupyter",
@@ -70,7 +66,6 @@ docs = [
   "sphinx_automodapi",
   "sphinxcontrib-bibtex",
   "tomli; python_version < '3.11'",
-  "toml"
 ]
 
 [project.urls]
