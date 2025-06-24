@@ -89,7 +89,7 @@ jobs:
         run: |
           python --version
           pip install pytest-cov restructuredtext-lint pytest-xdist 'coverage!=6.3.0'
-          pip install --group tests -e .
+          pip install --group dev -e .
           pip freeze
           pip list
 
