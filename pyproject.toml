@@ -47,7 +47,7 @@ dependencies = [
 dev = [
     "pre-commit",
     "setuptools_scm[toml]",
-    "towncrier"
+    "towncrier",
     {include-group = "docs"}
 ]
 
