@@ -5,7 +5,15 @@ from datetime import datetime
 from pathlib import Path
 
 from astropy.io import fits
-from casatools import ms as MeasurementTool
+
+try:
+    from casatools import ms as MeasurementTool
+except ModuleNotFoundError as e:
+    raise ModuleNotFoundError(
+        "Cannot import casatools. Please make sure "
+        "you installed radiotools with the optional "
+        "casa dependency (uv pip install 'radiosim[casa]')!"
+    ) from e
 
 
 class Measurement:

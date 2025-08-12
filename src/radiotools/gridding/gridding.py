@@ -5,8 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.constants import c
 from astropy.io import fits
-from casatools.table import table
 from matplotlib.colors import LogNorm, PowerNorm
+
+try:
+    from casatools.table import table
+
+    CASA_AVAIL = True
+except ModuleNotFoundError:
+    CASA_AVAIL = False
 
 
 class Gridder:
@@ -654,6 +660,12 @@ class Gridder:
         -------
         Mask and dirty img
         """
+        if not CASA_AVAIL:
+            raise ModuleNotFoundError(
+                "Cannot import casatools. Please make sure "
+                "you installed radiotools with the optional "
+                "casa dependency (uv pip install 'radiosim[casa]')!"
+            )
 
         if ms_path[-1] != "/":
             ms_path += "/"

@@ -86,7 +86,7 @@ jobs:
         run: |
           python --version
           uv pip install --upgrade pip
-          uv pip install --group tests -e .
+          uv pip install --group tests -e .[casa]
           uv pip freeze
           uv pip list
 
@@ -97,7 +97,7 @@ jobs:
         run: |
           python --version
           uv pip install --system --upgrade pip
-          uv pip install --system --group tests -e .
+          uv pip install --system --group tests -e .[casa]
           uv pip freeze
           uv pip list
 
@@ -137,8 +137,8 @@ jobs:
       - name: Install doc dependencies
         run: |
           sudo apt update --yes && sudo apt install --yes git
-          uv pip install --system . -U pip towncrier
-          uv pip install --system . --group docs -e .
+          uv pip install --system -U pip towncrier
+          uv pip install --system --group docs -e .[casa]
           git describe --tags
 
       - name: Build docs
