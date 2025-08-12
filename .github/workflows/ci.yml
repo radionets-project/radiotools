@@ -31,15 +31,9 @@ jobs:
             python-version: "3.12"
             install-method: pip
 
-          # macos 13 image is x86-based
-          - os: macos-13
-            python-version: "3.11"
-            install-method: pip
-
-          # macos 14 image is arm64 based
-          - os: macos-14
+          - os: macos-latest
             python-version: "3.12"
-            install-method: mamba
+            install-method: pip
 
     defaults:
       run:
