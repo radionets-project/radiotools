@@ -166,3 +166,5 @@ cython_debug/
 
 # CASA files
 *.log
+
+.ruff_cache
