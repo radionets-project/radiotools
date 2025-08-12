@@ -51,6 +51,8 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: astral-sh/setup-uv@v6
+
       - name: Prepare mamba installation
         if: matrix.install-method == 'mamba' &&  contains(github.event.pull_request.labels.*.name, 'documentation-only') == false
         env:
@@ -67,7 +69,6 @@ jobs:
           cache-downloads: true
 
       - name: Install dependencies
-        uses: astral-sh/setup-uv@v6
         if: matrix.install-method == 'mamba'
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
@@ -79,15 +80,13 @@ jobs:
           uv pip list
 
       - name: Install dependencies
-        uses: astral-sh/setup-uv@v6
-        with:
-          python-version: ${{ matrix.python-version }}
         if: matrix.install-method == 'pip'
         env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
           UV_SYSTEM_PYTHON: 1
         run: |
           python --version
-          uv pip install --upgrade pip
+          uv pip install --system --upgrade pip
           uv pip install --group tests -e .
           uv pip freeze
           uv pip list
