@@ -10,7 +10,7 @@ readme = "README.rst"
 dynamic = ["version"]
 
 authors = [
-    { name = "radionets-project developers" }
+    { name = "radionets developers" }
 ]
 maintainers = [
   { name = "Anno Knierim", email = "anno.knierim@tu-dortmund.de" },

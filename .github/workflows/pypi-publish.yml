@@ -1,4 +1,4 @@
-name: Build and publish radionets
+name: Build and publish radiotools
 
 on:
   push:
