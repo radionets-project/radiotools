@@ -30,9 +30,9 @@ COLORS = [
     "#b3d4ff",
 ]
 
-PYVISGEN_LAYOUTS = "https://raw.githubusercontent.com/radionets-project/pyvisgen/"
-PYVISGEN_LAYOUTS += "refs/heads/main/pyvisgen/layouts/"
-PYVISGEN = "https://github.com/radionets-project/pyvisgen/blob/main/pyvisgen/layouts/"
+PYVISGEN_LAYOUTS = "https://raw.githubusercontent.com/radionets-project/"
+PYVISGEN_LAYOUTS += "pyvisgen/refs/heads/main/resources/layouts/"
+PYVISGEN = "https://github.com/radionets-project/pyvisgen/tree/main/resources/layouts"
 
 LOCATIONS = [
     "alma",
@@ -144,6 +144,18 @@ class SourceVisibility:
         elif isinstance(location, EarthLocation):
             self.name = location
             self.location = location
+
+        elif isinstance(location, tuple) and list(map(type, location)) == [
+            str,
+            pd.DataFrame,
+        ]:
+            self.name = location[0]
+            self.location = EarthLocation.from_geocentric(
+                location[1].X,
+                location[1].Y,
+                location[1].Z,
+                unit=u.m,
+            )
 
         else:
             raise ValueError("Please provide a valid location!")
