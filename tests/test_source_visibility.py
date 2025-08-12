@@ -31,9 +31,9 @@ def test_source_visibility():
     dates = sv.get_optimal_date()
 
     expected_dates = [
-        pd.Timestamp("2024-10-03 17:05:56"),
-        pd.Timestamp("2024-10-03 19:05:56"),
-        pd.Timestamp("2024-10-03 21:05:56"),
+        pd.Timestamp("2024-10-03 16:52:58"),
+        pd.Timestamp("2024-10-03 18:52:58"),
+        pd.Timestamp("2024-10-03 20:52:58"),
     ]
 
     assert dates == expected_dates
@@ -45,9 +45,9 @@ def test_source_visibility_alt_restrictions():
     alts = np.array([np.arange(0, 95, 5), np.arange(90, -5, -5)])
 
     opt_dates = [
-        pd.Timestamp("2024-10-03 17:05:56"),
-        pd.Timestamp("2024-10-03 19:05:56"),
-        pd.Timestamp("2024-10-03 21:05:56"),
+        pd.Timestamp("2024-10-03 16:52:58"),
+        pd.Timestamp("2024-10-03 18:52:58"),
+        pd.Timestamp("2024-10-03 20:52:58"),
     ]
 
     results = []

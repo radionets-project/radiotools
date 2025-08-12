@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import requests
 from astropy.io import fits
@@ -23,14 +25,7 @@ def get_array_names(url: str) -> list[str]:
     r = requests.get(url)
     soup = BeautifulSoup(r.text, features="html.parser")
 
-    a_tags = soup.find_all("a")
-
-    layouts = []
-    for i in a_tags:
-        if ".txt" in str(i.get("href")):
-            layouts.append(i.get("aria-label").split(".txt")[0])
-
-    layouts = list(set(layouts))
+    layouts = list(set(re.findall(r"\b\w+\.txt\b", str(soup.div))))
 
     return layouts
 
