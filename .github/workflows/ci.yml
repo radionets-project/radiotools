@@ -87,7 +87,7 @@ jobs:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
           python --version
-          uv sync --locked --group dev
+          uv sync --group dev
 
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
