@@ -29,12 +29,12 @@ jobs:
 
           - os: ubuntu-latest
             python-version: "3.12"
-            install-method: uv
+            install-method: pip
 
           # macos 13 image is x86-based
           - os: macos-13
             python-version: "3.11"
-            install-method: uv
+            install-method: pip
 
           # macos 14 image is arm64 based
           - os: macos-14
@@ -52,8 +52,6 @@ jobs:
           fetch-depth: 0
 
       - uses: astral-sh/setup-uv@v6
-        with:
-            python-version: ${{ matrix.python-version }}
 
       - name: Prepare mamba installation
         if: matrix.install-method == 'mamba' &&  contains(github.event.pull_request.labels.*.name, 'documentation-only') == false
@@ -82,13 +80,16 @@ jobs:
           uv pip list
 
       - name: Install dependencies
-        if: matrix.install-method == 'uv'
+        if: matrix.install-method == 'pip'
         env:
+          UV_SYSTEM_PYTHON: 1
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
           python --version
-          uv sync --group dev
-          source .venv/bin/activate
+          uv pip install --system --upgrade pip
+          uv pip install --system --group tests -e .
+          uv pip freeze
+          uv pip list
 
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
