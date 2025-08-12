@@ -40,6 +40,7 @@ dependencies = [
     "rich >=13.0",
     "requests",
     "bs4",
+    "toml>=0.10.2",
 ]
 
 [project.optional-dependencies]
@@ -53,7 +54,6 @@ tests = [
   "pytest-cov",
   "pytest-xdist",
   "restructuredtext-lint",
-  "tomli",
 ]
 
 docs = [
@@ -77,7 +77,6 @@ docs = [
   "sphinx-togglebutton>=0.3.2",
   "sphinx_automodapi",
   "sphinxcontrib-bibtex",
-  "tomli; python_version < '3.11'",
 ]
 
 dev = [
