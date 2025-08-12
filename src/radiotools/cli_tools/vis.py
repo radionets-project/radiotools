@@ -1,4 +1,6 @@
-"""Tool to calculate and show source visibility for a given time, location/array layout."""
+"""Tool to calculate and show source visibility for a given time,
+location/array layout.
+"""
 
 import datetime
 

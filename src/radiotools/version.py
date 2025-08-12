@@ -11,7 +11,8 @@ except Exception:
     warnings.warn(
         "Could not determine radiotools version. This indicates"
         " a broken installation. Please install radiotools from"
-        " the local git repository."
+        " the local git repository.",
+        stacklevel=2,
     )
     del warnings
     version = "0.0.0"

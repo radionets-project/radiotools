@@ -13,9 +13,6 @@ class Measurement:
     A tool to convert between FITS files and NRAO CASA measurement sets
     """
 
-    def __init__(self):
-        None
-
     def get_obs_time(self):
         """
         Returns the datetime at which the Observation was started.
@@ -45,7 +42,9 @@ class Measurement:
                 shutil.rmtree(root)
             else:
                 warnings.warn(
-                    f"The directory {root} already exists! If you want to overwrite it set overwrite=True!"
+                    f"The directory {root} already exists! If you want "
+                    "to overwrite it set overwrite=True!",
+                    stacklevel=2,
                 )
 
         if not root.exists() or overwrite:
@@ -74,19 +73,22 @@ class Measurement:
                 file.unlink()
             else:
                 warnings.warn(
-                    f"The file {file} already exists! If you want to overwrite it set overwrite=True!"
+                    f"The file {file} already exists! If you want "
+                    "to overwrite it set overwrite=True!",
+                    stacklevel=2,
                 )
 
         if not file.is_file() or overwrite:
             self._ms.tofits(path, overwrite=overwrite)
 
     def get_ms(self):
-        """
-        Returns a copy of the current measurement as a NRAO CASA measurement set.
-        There will be no permanent physical version of the measurement on the disk.
-        If the Measurement was not created using a FITS file,
-        this will try to return a measurement set saved in this Measurement.
-        If no measurement set is present, this will raise an exception.
+        """Returns a copy of the current measurement
+        as a NRAO CASA measurement set. There will be
+        no permanent physical version of the measurement
+        on the disk. If the Measurement was not created
+        using a FITS file, this will try to return a
+        measurement set saved in this Measurement. If no
+        measurement set is present, this will raise an exception.
         """
 
         if not hasattr(self, "_fits_path"):
@@ -109,14 +111,13 @@ class Measurement:
 
         return ms
 
-    """
-        Returns a copy of the current measurement as a FITS file.
-        If the Measurement was not not created using a CASA measurement set,
-        this will try to return a FITS file saved in this Measurement.
-        If no FITS file is present, this will raise an exception.
-    """
-
     def get_fits(self):
+        """Returns a copy of the current measurement
+        as a FITS file. If the Measurement was not not
+        created using a CASA measurement set, this will try
+        to return a FITS file saved in this Measurement.
+        If no FITS file is present, this will raise an exception.
+        """
         if not hasattr(self, "_ms_path"):
             return self._fits
 
@@ -137,13 +138,12 @@ class Measurement:
 
     @classmethod
     def from_fits(cls, fits_path):
-        """
-        Creates a Measurement from a FITS file
+        """Creates a Measurement from a FITS file
 
         Parameters
         ----------
         fits_path: str
-        The path to the FITS file
+            The path to the FITS file
         """
 
         cls = cls()
@@ -155,14 +155,13 @@ class Measurement:
 
     @classmethod
     def from_ms(cls, ms_path):
-        """
-        Creates a Measurement from a NRAO CASA measurement set
+        """Creates a Measurement from a NRAO CASA
+        measurement set
 
         Parameters
         ----------
         ms_path: str
-        The path to the root of the measurement set
-
+            The path to the root of the measurement set
         """
 
         cls = cls()
