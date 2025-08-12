@@ -5,17 +5,15 @@ build:
   apt_packages:
     - graphviz
   tools:
-    python: "3.10"
+    python: "3.11"
   jobs:
     pre_create_environment:
-      - mkdir -p /home/docs/.casa/data
-
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
+         - asdf plugin add uv
+         - asdf install uv latest
+         - asdf global uv latest
+    install:
+      - uv pip install --upgrade pip
+      - uv pip install --group docs .
 
 sphinx:
   configuration: docs/conf.py
