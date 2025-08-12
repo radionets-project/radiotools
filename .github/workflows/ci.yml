@@ -52,7 +52,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv and set python version
-        uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -86,12 +86,13 @@ jobs:
         if: matrix.install-method == 'pip'
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
+          UV_SYSTEM_PYTHON: 1
         run: |
           python --version
-          uv pip install --system --upgrade pip
-          uv pip install --system --group tests -e .
-          uv pip freeze --system
-          uv pip list --system
+          uv pip install --upgrade pip
+          uv pip install --group tests -e .
+          uv pip freeze
+          uv pip list
 
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
