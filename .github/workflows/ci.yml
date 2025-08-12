@@ -135,8 +135,7 @@ jobs:
       - name: Install doc dependencies
         run: |
           sudo apt update --yes && sudo apt install --yes git
-          uv pip install --system -U pip towncrier
-          uv pip install --system --group docs -e .[casa]
+          uv sync --locked --group docs
           git describe --tags
 
       - name: Create CASA data directory

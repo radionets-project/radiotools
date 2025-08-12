@@ -77,6 +77,7 @@ docs = [
   "sphinx-togglebutton>=0.3.2",
   "sphinx_automodapi",
   "sphinxcontrib-bibtex",
+  "towncrier",
 ]
 
 dev = [
