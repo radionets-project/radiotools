@@ -2266,6 +2266,7 @@ dev = [
     { name = "sphinx-tippy" },
     { name = "sphinx-togglebutton" },
     { name = "sphinxcontrib-bibtex" },
+    { name = "towncrier" },
 ]
 docs = [
     { name = "graphviz" },
@@ -2288,6 +2289,7 @@ docs = [
     { name = "sphinx-tippy" },
     { name = "sphinx-togglebutton" },
     { name = "sphinxcontrib-bibtex" },
+    { name = "towncrier" },
 ]
 tests = [
     { name = "coverage" },
@@ -2341,6 +2343,7 @@ dev = [
     { name = "sphinx-tippy", specifier = ">=0.4.3" },
     { name = "sphinx-togglebutton", specifier = ">=0.3.2" },
     { name = "sphinxcontrib-bibtex" },
+    { name = "towncrier", specifier = ">=24.8.0" },
 ]
 docs = [
     { name = "graphviz" },
@@ -2363,6 +2366,7 @@ docs = [
     { name = "sphinx-tippy", specifier = ">=0.4.3" },
     { name = "sphinx-togglebutton", specifier = ">=0.3.2" },
     { name = "sphinxcontrib-bibtex" },
+    { name = "towncrier", specifier = ">=24.8.0" },
 ]
 tests = [
     { name = "coverage", specifier = "!=6.3.0" },
