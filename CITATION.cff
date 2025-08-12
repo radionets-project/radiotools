@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Knierim"
+  given-names: "Anno"
+  orcid: "https://orcid.org/0009-0004-8728-2879"
+- family-names: "Groß"
+  given-names: "Tom"
+  orcid: "https://orcid.org/0009-0008-5497-0885"
+- family-names: "Schmitz"
+  given-names: "Kevin"
+  oricd: "https://orcid.org/0000-0002-9883-4454"
+title: "radionets-project/radiotools: v0.1.2"
+version: v0.1.2
+doi: 10.5281/zenodo.15322218
+date-released: 2025-05-02
+url: "https://github.com/radionets-project/radiotools"

@@ -45,9 +45,9 @@ def test_source_visibility_alt_restrictions():
     alts = np.array([np.arange(0, 95, 5), np.arange(90, -5, -5)])
 
     opt_dates = [
-        pd.Timestamp("2022-12-31 16:29:11"),
-        pd.Timestamp("2022-12-31 22:29:11"),
-        pd.Timestamp("2023-01-01 04:29:11"),
+        pd.Timestamp("2024-10-03 17:05:56"),
+        pd.Timestamp("2024-10-03 19:05:56"),
+        pd.Timestamp("2024-10-03 21:05:56"),
     ]
 
     results = []
@@ -56,10 +56,11 @@ def test_source_visibility_alt_restrictions():
         try:
             results.append(
                 SourceVisibility(
-                    target="crab",
-                    date="2022-12-31",
-                    location="vla",
-                    obs_length=12.0,
+                    target="M87",
+                    date="2024-10-03",
+                    location="vlba",
+                    obs_length=4.0,
+                    frame="icrs",
                     min_alt=alts[0][i],
                     max_alt=alts[1][i],
                 ).get_optimal_date()
