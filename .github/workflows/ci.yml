@@ -136,6 +136,7 @@ jobs:
         run: |
           sudo apt update --yes && sudo apt install --yes git
           uv sync --locked --extra casa --group docs
+          source .venv/bin/activate
           git describe --tags
 
       - name: Create CASA data directory
@@ -143,7 +144,8 @@ jobs:
           mkdir -p $HOME/.casa/data
 
       - name: Build docs
-        run: make -C docs html
+        run: |
+          make -C docs html
 
       - name: Produce Changelog
         run: |
