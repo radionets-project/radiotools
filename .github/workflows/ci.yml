@@ -67,8 +67,8 @@ jobs:
           cache-downloads: true
 
       - name: Install dependencies
-        if: matrix.install-method == 'mamba'
         uses: astral-sh/setup-uv@v6
+        if: matrix.install-method == 'mamba'
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
@@ -79,10 +79,10 @@ jobs:
           uv pip list
 
       - name: Install dependencies
-        if: matrix.install-method == 'pip'
         uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
+        if: matrix.install-method == 'pip'
         env:
           UV_SYSTEM_PYTHON: 1
         run: |
