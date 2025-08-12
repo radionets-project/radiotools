@@ -135,7 +135,7 @@ jobs:
       - name: Install doc dependencies
         run: |
           sudo apt update --yes && sudo apt install --yes git
-          uv sync --locked --group docs
+          uv sync --locked --extra casa --group docs
           git describe --tags
 
       - name: Create CASA data directory
