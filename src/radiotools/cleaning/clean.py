@@ -54,7 +54,25 @@ class WSClean:
         create_skymodel: bool = False,
         save_config: bool | str | Path = False,
     ) -> None:
-        if not isinstance(clean_config, (dict, str, Path)):
+        """Wrapper class for WSClean.
+
+        Parameters
+        ----------
+        ms : str or Path
+            Path to the measurement set.
+        clean_config : dict or str or Path
+            Either a dict containing the wsclean options or
+            a path to a toml file containing the options.
+            See note.
+        create_skymodel : bool, optional
+            Whether to create a skymodel before cleaning the image.
+            Default: False.
+        save_config : bool or str or Path, optional
+            If True, save the config to a file relative to the file
+            this class is called from. If given a path, the config
+            is saved to that location instead. Default: False.
+        """
+        if not isinstance(clean_config, dict | str | Path):
             raise ValueError(
                 "Please provide EITHER a dict object or a path"
                 " to an existing configuration toml file."
@@ -65,7 +83,7 @@ class WSClean:
 
         self.ms = ms
 
-        if isinstance(clean_config, (str, Path)):
+        if isinstance(clean_config, str | Path):
             if not Path(clean_config).is_file():
                 raise OSError(f"File {Path(clean_config).absolute()} does not exist.")
 
@@ -164,7 +182,7 @@ class WSClean:
         """Saves the config if ``save_config`` is set to ``True``
         when initializing the class.
         """
-        if not isinstance(output_file, (str, Path)):
+        if not isinstance(output_file, str | Path):
             output_file = Path(_clean_config["file_name"]).name
             output_file += f"_{_clean_config['pol']}" + "_config.toml"
 

@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 import datetime
-import sys
+import tomllib
 from pathlib import Path
 
 import radiotools
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
 
 pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
 pyproject = tomllib.loads(pyproject_path.read_text())

@@ -16,41 +16,33 @@ class Layout:
 
     """
 
-    def __init__(self):
-        None
-
     def get_baselines(self):
+        """Returns an array containing the lengths of all
+        unique (!) baselines in meters.
         """
-        Returns an array containing the lengths of all unique (!) baselines in meters.
-
-        """
-
         loc = np.array([self.x, self.y]).T
         baselines = np.array([])
 
-        i = 0
-        for vec1 in loc:
+        for i, vec1 in enumerate(loc):
             for vec2 in loc[i + 1 :]:
                 baselines = np.append(
                     baselines,
                     np.linalg.norm(np.reshape(vec1 - vec2, (2, 1)), ord=2, axis=0),
                 )
-            i += 1
 
         return baselines
 
     def get_baseline_vecs(self):
+        """Returns an array containing the vectors of all (!)
+        baselines (including conjugates).
         """
-        Returns an array containing the vectors of all (!) baselines (including conjugates).
-
-        """
-
         loc = np.array([self.x, self.y]).T
         baselines = np.array([])
 
         for vec1 in loc:
             for vec2 in loc:
                 baselines = np.append(baselines, np.reshape(vec1 - vec2, (2, 1)))
+
         return np.reshape(baselines, (int(len(baselines) / 2), 2)).T
 
     def get_max_resolution(self, frequency):
@@ -67,18 +59,25 @@ class Layout:
         return 3600 * 180 / np.pi * 3 * 1e8 / (frequency * np.max(self.get_baselines()))
 
     def get_station(self, name):
-        """
-        Returns all information about the station with the given name as a `pandas.Series`.
+        """Returns all information about the station
+        with the given name as a `pandas.Series`.
 
         Parameters
         ----------
         name : str
-            The name of the station (antenna). This is case sensitive!
+            The name of the station (antenna).
+            This is case sensitive!
 
+        Returns
+        -------
+        pd.Series
+            Pandas series containing all information
+            about the given station.
         """
         if name not in self.names:
             raise KeyError(
-                "This station could not be found. Make sure you typed the name correctly (case sensitive)!"
+                "This station could not be found. Make sure "
+                "you typed the name correctly (case sensitive)!"
             )
 
         df = self.get_dataframe()
@@ -86,9 +85,7 @@ class Layout:
         return df.loc[df["station_name"] == name]
 
     def get_dataframe(self):
-        """
-        Returns the layout data as a `pandas.DataFrame`.
-        """
+        """Returns the layout data as a :class:`pandas.DataFrame`."""
 
         return pd.DataFrame(
             data={
@@ -112,6 +109,7 @@ class Layout:
         output += f"\nLongest baseline: {np.max(self.get_baselines())} m"
         output += f"\nShortest baseline: {np.min(self.get_baselines())} m"
         output += f"\n\n{self.get_dataframe()}"
+
         return output
 
     def display(self):
@@ -125,15 +123,15 @@ class Layout:
         return not (self.rel_to_site is None or self.rel_to_site == "")
 
     def as_relative(self, rel_to_site):
-        """
-        Returns a copy of the current layout in relative coordinates.
+        """Returns a copy of the current layout in
+        relative coordinates.
 
         Parameters
         ----------
         rel_to_site : str
-            The name of the site the coordinates are supposed to be relative to.
-            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
-
+            The name of the site the coordinates are
+            supposed to be relative to. Has to be an
+            existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         def gen_rng_file():
@@ -153,9 +151,9 @@ class Layout:
         return new_layout
 
     def as_absolute(self):
-        """
-        Returns a copy of the current layout in absolute coordinates.
-        Requires the layout to be in relative coordinates.
+        """Returns a copy of the current layout in absolute
+        coordinates. Requires the layout to be in relative
+        coordinates.
         """
 
         if not self.is_relative():
@@ -186,25 +184,26 @@ class Layout:
         self,
         save_to_file="",
         ref_frequency=None,
-        plot_args={"color": "royalblue", "alpha": 0.5},
-        save_args={},
+        plot_args=None,
+        save_args=None,
         show_zeros=False,
     ):
-        """
-        Plots the uv-sampling (uv-plane) of the array.
+        """Plots the uv-sampling (uv-plane) of the array.
 
         Parameters
         ----------
         save_to_file : str, optional
             The name of the file the plot should be saved to.
-
         plot_args : dict, optional
             Arguments to pass to the axis.scatter function
-
         save_args : dict, optional
             Arguments to pass to the figure.savefig function
-
         """
+        if plot_args is None:
+            plot_args = {"color": "royalblue", "alpha": 0.5}
+
+        if save_args is None:
+            save_args = {}
 
         baselines = self.get_baseline_vecs()
 
@@ -228,30 +227,34 @@ class Layout:
         return fig, ax
 
     def plot(
-        self, save_to_file="", annotate=False, limits=None, plot_args={}, save_args={}
+        self,
+        save_to_file="",
+        annotate=False,
+        limits=None,
+        plot_args=None,
+        save_args=None,
     ):
-        """
-        Generates a plot of the arrangement of the layout.
+        """Generates a plot of the arrangement of the layout.
 
         Parameters
         ----------
         save_to_file : str, optional
             The name of the file the plot should be saved to.
-
         annotate : bool, optional
             Whether to mark the stations with their respective names.
-
         limits : tuple of tuples, optional
             The x and y bounds (e.g. `((0,1), (0,1))`). Set tuple of one
             axis (x or y) to None to only limit the other axis.
-
         plot_args : dict, optional
             Arguments to pass to the axis.scatter function
-
         save_args : dict, optional
             Arguments to pass to the figure.savefig function
-
         """
+        if plot_args is None:
+            plot_args = {}
+
+        if save_args is None:
+            save_args = {}
 
         singular_alt = len(np.unique(self.altitude)) == 1
 
@@ -275,7 +278,7 @@ class Layout:
             fig.colorbar(im, ax=ax, label="Altitude")
 
         if annotate:
-            for index, row in self.get_dataframe().iterrows():
+            for _, row in self.get_dataframe().iterrows():
                 ax.annotate(
                     text=f"{row['station_name']}", xy=(row.x, row.y), fontsize=8
                 )
@@ -297,20 +300,17 @@ class Layout:
         ----------
         path : str
             The path of the file to save the array layout to.
-
         fmt : str, optional
             The layout format the output file is supposed to have
             (available: casa, pyvisgen) (default is pyvisgen).
-
         overwrite : bool, optional
             Whether to overwrite the file if it already exists
             (default is False).
-
         rel_to_site : str, optional
-            The name of the site the coordinates are supposed to be saved relative to.
-            Is ignored is `None` or empty or `fmt` is not set to 'pyvisgen'.
-            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
-
+            The name of the site the coordinates are supposed
+            to be saved relative to. Is ignored is `None` or
+            empty or `fmt` is not set to 'pyvisgen'. Has to be
+            an existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         FORMATS = ["casa", "pyvisgen"]
@@ -322,7 +322,8 @@ class Layout:
                 file.unlink()
             else:
                 raise FileExistsError(
-                    f"The file {file} already exists! If you want to overwrite it set overwrite=True!"
+                    f"The file {file} already exists! If you want "
+                    "to overwrite it set overwrite=True!"
                 )
 
         data = []
@@ -337,7 +338,8 @@ class Layout:
             location = EarthLocation.of_site(rel_to_site)
 
             if self.is_relative():
-                # ... and is already relative --> reconvert to absolute (if not same site)
+                # ... and is already relative --> reconvert
+                # to absolute (if not same site)
 
                 prev_location = EarthLocation.of_site(self.rel_to_site)
                 nx, ny, nz = itrf2loc(
@@ -423,7 +425,8 @@ class Layout:
 
             case _:
                 raise ValueError(
-                    f"{fmt} is not a valid format! Possible formats are: {', '.join(FORMATS)}!"
+                    f"{fmt} is not a valid format! Possible "
+                    f"formats are: {', '.join(FORMATS)}!"
                 )
 
         with open(file, "w", encoding="utf-8") as f:
@@ -440,32 +443,27 @@ class Layout:
         ----------
         cfg_path : str
             The path of the config file to import.
-
         el_low : float or array_like, optional
             The minimal elevation in degrees the telescope can be adjusted to.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
-
         el_high : float or array_like, optional
             The maximal elevation in degrees the telescope can be adjusted to.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
-
         sefd : float or array_like, optional
             The system equivalent flux density of the telescope.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
-
         altitude : float or array_like, optional
             The altitude of the telescope.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
-
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored is `None` or empty or `fmt`.
-            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
-
+            Has to be an existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         df = pd.read_csv(
@@ -504,8 +502,7 @@ class Layout:
 
     @classmethod
     def from_pyvisgen(cls, cfg_path, rel_to_site=None):
-        """
-        Import a layout from a radionets pyvisgen layout config.
+        """Import a layout from a radionets pyvisgen layout config.
 
         Parameters
         ----------
@@ -515,7 +512,8 @@ class Layout:
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored is `None` or empty or `fmt`.
-            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
+            Has to be an existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         df = pd.read_csv(
@@ -563,7 +561,7 @@ class Layout:
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored is `None` or empty or `fmt`. Has to be an
-            existing site for `astropy.coordinates.EarthLocation.of_site()`.
+            existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
             Default: None
         """
         data = []
@@ -604,9 +602,9 @@ class Layout:
 
 
 def loc2itrf(cx, cy, cz, locx=0.0, locy=0.0, locz=0.0):
-    """
-    Returns the given points locx, locy, locz, which are relative to a common central point
-    cx, cy, cz as the absolute points on the earth.
+    """Returns the given points locx, locy, locz, which are
+    relative to a common central point cx, cy, cz as the
+    absolute points on the earth.
 
     Modified version of a CASAtasks script
     https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casa5/gcwrap/python/scripts/simutil.py
@@ -615,22 +613,16 @@ def loc2itrf(cx, cy, cz, locx=0.0, locy=0.0, locz=0.0):
     ----------
     locx: array_like or float
         The x-coordinate in relative coordinates
-
     locy: array_like or float
         The y-coordinate in relative coordinates
-
     locz: array_like or float
         The z-coordinate in relative coordinates
-
     cx: float
         The center's x-coordinate in WGS84 coordinates
-
     cy: float
         The center's y-coordinate in WGS84 coordinates
-
     cz: float
         The center's z-coordinate in WGS84 coordinates
-
     """
 
     lon, lat, alt = geocentric2geodetic(cx, cy, cz)
@@ -657,9 +649,8 @@ def loc2itrf(cx, cy, cz, locx=0.0, locy=0.0, locz=0.0):
 
 
 def itrf2loc(x, y, z, cx, cy, cz):
-    """
-    Returns the relative position of given points x, y, z to a common central point
-    cx, cy, cz on the earth.
+    """Returns the relative position of given points
+    x, y, z to a common central point cx, cy, cz on the earth.
 
     Modified version of a CASAtasks script
     https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casa5/gcwrap/python/scripts/simutil.py
@@ -668,22 +659,16 @@ def itrf2loc(x, y, z, cx, cy, cz):
     ----------
     x: array_like or float
         The x-coordinate in WGS84 coordinates
-
     y: array_like or float
         The y-coordinate in WGS84 coordinates
-
     z: array_like or float
         The z-coordinate in WGS84 coordinates
-
     cx: float
         The center's x-coordinate in WGS84 coordinates
-
     cy: float
         The center's y-coordinate in WGS84 coordinates
-
     cz: float
         The center's z-coordinate in WGS84 coordinates
-
     """
 
     clon, clat, h = geocentric2geodetic(cx, cy, cz)
@@ -725,19 +710,17 @@ def itrf2loc(x, y, z, cx, cy, cz):
 
 
 def geocentric2geodetic(x, y, z):
-    """
-    Returns given WGS84 coordinates (x,y,z) as geodetic coordinates (longitude [deg], latitude [deg], altitude [meter])
+    """Returns given WGS84 coordinates (x,y,z) as geodetic
+    coordinates (longitude [deg], latitude [deg], altitude [meter])
 
     Parameters
     ----------
     x: array_like or float
-    The x-coordinate in WGS84 coordinates
-
+        The x-coordinate in WGS84 coordinates
     y: array_like or float
-    The y-coordinate in WGS84 coordinates
-
+        The y-coordinate in WGS84 coordinates
     z: array_like or float
-    The z-coordinate in WGS84 coordinates
+        The z-coordinate in WGS84 coordinates
     """
 
     if np.isscalar(x):
@@ -757,19 +740,17 @@ def geocentric2geodetic(x, y, z):
 
 
 def geodetic2geocentric(lon, lat, alt):
-    """
-    Returns given geodetic coordinates (longitude, latitude, altitude) coordinates as (x,y,z) in meters
+    """Returns given geodetic coordinates (longitude, latitude, altitude)
+    coordinates as (x,y,z) in meters
 
     Parameters
     ----------
     lon: array_like or float
-    The longitude in geodetic coordinates
-
+        The longitude in geodetic coordinates
     lat: array_like or float
-    The latitude in geodetic coordinates
-
+        The latitude in geodetic coordinates
     alt: array_like or float
-    The altitude in geodetic coordinates
+        The altitude in geodetic coordinates
     """
 
     if np.isscalar(lon):

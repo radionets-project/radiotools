@@ -20,26 +20,20 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            python-version: "3.10"
-            install-method: mamba
-
-          - os: ubuntu-latest
             python-version: "3.11"
             install-method: mamba
 
           - os: ubuntu-latest
-            python-version: "3.11"
-            install-method: pip
-
-          # macos 13 image is x86-based
-          - os: macos-13
-            python-version: "3.10"
-            install-method: pip
-
-          # macos 14 image is arm64 based
-          - os: macos-14
-            python-version: "3.11"
+            python-version: "3.12"
             install-method: mamba
+
+          - os: ubuntu-latest
+            python-version: "3.12"
+            install-method: pip
+
+          - os: macos-latest
+            python-version: "3.12"
+            install-method: pip
 
     defaults:
       run:
@@ -51,6 +45,8 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: astral-sh/setup-uv@v6
+
       - name: Prepare mamba installation
         if: matrix.install-method == 'mamba' &&  contains(github.event.pull_request.labels.*.name, 'documentation-only') == false
         env:
@@ -61,7 +57,7 @@ jobs:
 
       - name: mamba setup
         if: matrix.install-method == 'mamba' &&  contains(github.event.pull_request.labels.*.name, 'documentation-only') == false
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: environment.yml
           cache-downloads: true
@@ -84,14 +80,26 @@ jobs:
           tee -a ~/.bash_profile <<<'export PATH="$pythonLocation/bin:$PATH"'
 
       - name: Install dependencies
+        if: matrix.install-method == 'mamba'
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
           python --version
-          pip install pytest-cov restructuredtext-lint pytest-xdist 'coverage!=6.3.0'
-          pip install -e .[all]
-          pip freeze
-          pip list
+          uv pip install --upgrade pip
+          uv pip install --group tests -e .[casa]
+          uv pip freeze
+          uv pip list
+
+      - name: Install dependencies
+        if: matrix.install-method == 'pip'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          python --version
+          uv pip install --system --upgrade pip
+          uv pip install --system --group tests -e .[casa]
+          uv pip freeze
+          uv pip list
 
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
@@ -99,10 +107,16 @@ jobs:
 
       - name: Tests
         run: |
-          pytest --cov --cov-report=xml
+          pytest -vv --cov --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -114,15 +128,24 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install doc dependencies
         run: |
           sudo apt update --yes && sudo apt install --yes git
-          pip install -U pip towncrier
+          uv sync --locked --extra casa --group docs
+          git describe --tags
+
+      - name: Create CASA data directory
+        run: |
+          mkdir -p $HOME/.casa/data
+
+      - name: Build docs
+        run: |
+          uv run make -C docs html
 
       - name: Produce Changelog
         run: |
-          towncrier build --yes --version==0.0.0
+          uv run towncrier build --yes --version==0.0.0

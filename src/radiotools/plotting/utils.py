@@ -40,21 +40,15 @@ def px2radec(
         Matplotlib axis object to apply the conversion to. This will call
         the ``ax.set()`` method. Default: ``None``
     """
-    if unit not in _PREFIXES.keys():
+    if unit not in _PREFIXES:
         raise ValueError(f"Unknown unit! Please provide one of {_PREFIXES.keys()}")
 
     px_incr = header["CDELT2"]
     ref_pos = header["CRPIX1"] - 1, header["CRPIX2"] - 1
     naxis = header["NAXIS1"], header["NAXIS2"]
 
-    if xlim:
-        xlim = ref_pos[0] - xlim[0], ref_pos[0] + xlim[1]
-    else:
-        xlim = (0, naxis[0])
-    if ylim:
-        ylim = ref_pos[1] - ylim[0], ref_pos[1] + ylim[1]
-    else:
-        ylim = (0, naxis[1])
+    xlim = (ref_pos[0] - xlim[0], ref_pos[0] + xlim[1]) if xlim else (0, naxis[0])
+    ylim = (ref_pos[1] - ylim[0], ref_pos[1] + ylim[1]) if ylim else (0, naxis[1])
 
     if not isinstance(num_ticks, tuple):
         num_ticks = num_ticks, num_ticks

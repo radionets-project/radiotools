@@ -1,0 +1,5 @@
+- Made CASA optional
+- radiotools now uses hatch as build backend
+- Added more settings for ruff in ``pyproject.toml``
+- Fixed formatting throughout the codebase
+- Updated CI and added CD
