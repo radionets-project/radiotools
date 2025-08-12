@@ -84,14 +84,14 @@ jobs:
 
       - name: Install dependencies
         if: matrix.install-method == 'pip'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
-          uv venv
           python --version
-          uv pip install --upgrade pip
-          uv pip install --group tests -e .
-          uv pip freeze
-          uv pip list
-          source .venv/bin/activate
+          uv pip install --system --upgrade pip
+          uv pip install --system --group tests -e .
+          uv pip freeze --system
+          uv pip list --system
 
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
