@@ -87,10 +87,11 @@ jobs:
         run: |
           uv venv
           python --version
-          uv pip install --system --upgrade pip
+          uv pip install --upgrade pip
           uv pip install --group tests -e .
           uv pip freeze
           uv pip list
+          source .venv/bin/activate
 
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
