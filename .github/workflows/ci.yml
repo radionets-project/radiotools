@@ -29,12 +29,12 @@ jobs:
 
           - os: ubuntu-latest
             python-version: "3.12"
-            install-method: pip
+            install-method: uv
 
           # macos 13 image is x86-based
           - os: macos-13
             python-version: "3.11"
-            install-method: pip
+            install-method: uv
 
           # macos 14 image is arm64 based
           - os: macos-14
@@ -82,14 +82,12 @@ jobs:
           uv pip list
 
       - name: Install dependencies
-        if: matrix.install-method == 'pip'
+        if: matrix.install-method == 'uv'
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
           python --version
-          uv pip install --system --upgrade pip
-          uv pip install --system --group tests -e .
-          uv pip list
+          uv sync --locked --group dev
 
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
