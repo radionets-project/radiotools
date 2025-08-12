@@ -127,10 +127,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@v6
-
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.11"
 
@@ -140,6 +138,10 @@ jobs:
           uv pip install --system -U pip towncrier
           uv pip install --system --group docs -e .[casa]
           git describe --tags
+
+      - name: Create CASA data directory
+        run: |
+          mkdir -p $HOME/.casa/data
 
       - name: Build docs
         run: make -C docs html
