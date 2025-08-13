@@ -11,7 +11,7 @@ build:
          - asdf plugin add uv
          - asdf install uv latest
          - asdf global uv latest
-         - mkdir $HOME/.casa/data
+         - mkdir -p $HOME/.casa/data
     install:
       - uv pip install --upgrade pip
       - uv pip install --group docs ".[casa]"
