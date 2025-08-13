@@ -13,8 +13,7 @@ build:
          - asdf global uv latest
          - mkdir -p $HOME/.casa/data
     install:
-      - uv pip install --upgrade pip
-      - uv pip install --group docs ".[casa]"
+      - uv sync --locked --extra casa --group docs
 
 sphinx:
   configuration: docs/conf.py
