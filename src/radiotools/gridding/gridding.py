@@ -115,26 +115,20 @@ class Gridder:
         fig=None,
         ax=None,
     ):
-        """
-        Plots the ungridded uv coverage
+        """Plots the ungridded uv coverage
 
         Parameters
         ----------
         plot_args : dict, optional
             The arguments for the pyplot scatter plot of the uv tuples
-
         save_to : str, optional
             Path to save the figure to
-
         save_args : str, optional
             The arguments for the savefig function
-
         annotation : str, optional
             The text to put into a label on the figure; None to deactivate
-
         fig : matplotlib.figure.Figure, optional
             A figure to put the plot into
-
         ax : matplotlib.axes._axes.Axes, optional
             A axis to put the plot into
 

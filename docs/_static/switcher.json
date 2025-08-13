@@ -1,0 +1,17 @@
+[
+  {
+    "name": "dev",
+    "version": "latest",
+    "url": "https://radionets-radiotools.readthedocs.io/en/latest/"
+  },
+  {
+    "name": "stable",
+    "version": "stable",
+    "url": "https://radionets-radiotools.readthedocs.io/en/stable/"
+  },
+  {
+    "name": "v0.2.0",
+    "version": "v0.2.0",
+    "url": "https://radionets-radiotools.readthedocs.io/en/v0.2.0/"
+  }
+]
