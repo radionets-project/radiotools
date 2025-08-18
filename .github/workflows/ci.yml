@@ -93,6 +93,11 @@ jobs:
         if: matrix.environment-type == 'mamba'
         run: micromamba list
 
+      - name: Initialize CASAData
+        run: |
+          mkdir -p ~/.casa/data/
+          python -c "import casatools;"
+
       - name: Tests
         run: |
           pytest -vv --cov --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
