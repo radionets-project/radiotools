@@ -80,18 +80,6 @@ jobs:
           tee -a ~/.bash_profile <<<'export PATH="$pythonLocation/bin:$PATH"'
 
       - name: Install dependencies
-        if: matrix.install-method == 'mamba'
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-        run: |
-          python --version
-          uv pip install --upgrade pip
-          uv pip install --group tests -e .[casa]
-          uv pip freeze
-          uv pip list
-
-      - name: Install dependencies
-        if: matrix.install-method == 'pip'
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
