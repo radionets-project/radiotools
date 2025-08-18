@@ -133,7 +133,8 @@ class Layout:
         rel_to_site : str
             The name of the site the coordinates are
             supposed to be relative to. Has to be an
-            existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
+            existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         def gen_rng_file():
@@ -310,7 +311,8 @@ class Layout:
         rel_to_site : str, optional
             The name of the site the coordinates are supposed to be saved relative to.
             Is ignored if `None` or empty or `fmt` is not set to 'pyvisgen'.
-            Has to be an existing site for `astropy.coordinates.EarthLocation.of_site()`.
+            Has to be an existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         FORMATS = ["casa", "pyvisgen"]
@@ -462,7 +464,8 @@ class Layout:
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored if `None` or empty.
-            Has to be an existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
+            Has to be an existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         df = pd.read_csv(
@@ -511,7 +514,8 @@ class Layout:
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored if `None` or empty.
-            Has to be an existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
+            Has to be an existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         df = pd.read_csv(
