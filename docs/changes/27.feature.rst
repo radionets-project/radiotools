@@ -1,0 +1,2 @@
+- Add classmethod to generate an array layout from a CASA NRAO Measurement Set
+- Fix some docstrings
