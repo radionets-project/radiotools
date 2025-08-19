@@ -53,11 +53,11 @@ jobs:
           environment-file: environment.yml
           cache-downloads: true
 
-      
+      - uses: astral-sh/setup-uv@v6
+
       - name: Install dependencies
-        uses: astral-sh/setup-uv@v6
-        with:
-          python-version: ${{ matrix.python-version }}
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
           python --version
           uv pip install --upgrade pip
