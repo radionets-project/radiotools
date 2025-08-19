@@ -46,8 +46,6 @@ def main(fits_path, ms_path, log=False):
         if out.exists():
             rmtree(out)
         uvfits2ms(path, out)
-        # if not log:
-        #     subprocess.run("rm casa-*.log", shell=True)
 
 
 if __name__ == "__main__":
