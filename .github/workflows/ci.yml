@@ -20,20 +20,13 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            python-version: "3.10"
+            install-method: mamba
+
+          - os: ubuntu-latest
             python-version: "3.11"
             install-method: mamba
-
-          - os: ubuntu-latest
-            python-version: "3.12"
-            install-method: mamba
-
-          - os: ubuntu-latest
-            python-version: "3.12"
-            install-method: pip
-
-          - os: macos-latest
-            python-version: "3.12"
-            install-method: pip
+            extra-args: ["codecov"]
 
     defaults:
       run:
@@ -44,11 +37,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up Python
-        uses: astral-sh/setup-uv@v6
-        with:
-          python-version: ${{ matrix.python-version }}
 
       - name: Prepare mamba installation
         if: matrix.install-method == 'mamba' &&  contains(github.event.pull_request.labels.*.name, 'documentation-only') == false
@@ -65,32 +53,12 @@ jobs:
           environment-file: environment.yml
           cache-downloads: true
 
-      - if: matrix.install-method == 'pip' && runner.os == 'macOS' && contains(github.event.pull_request.labels.*.name, 'documentation-only') == false
-        name: Fix Python PATH on macOS
-        # See https://github.com/actions/setup-python/issues/132 and
-        # https://github.com/actions/setup-python/issues/132#issuecomment-779406058
-        # Login shells on macOS prepend system paths, so we need to
-        # prepend the python path from actions/setup-python.
-        # Micromamba sets up ~/.bash_profile, where we need to set the path now.
-        run: |
-          tee -a ~/.bash_profile <<<'export PATH="$pythonLocation/bin:$PATH"'
-
+      
       - name: Install dependencies
-        if: matrix.install-method == 'mamba'
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
         run: |
-          python --version
-          uv pip install --upgrade pip
-          uv pip install --group tests -e .[casa]
-          uv pip freeze
-          uv pip list
-
-      - name: Install dependencies
-        if: matrix.install-method == 'pip'
-        run: |
-          uv venv .venv
-          source .venv/bin/activate
           python --version
           uv pip install --upgrade pip
           uv pip install --group tests -e .[casa]
