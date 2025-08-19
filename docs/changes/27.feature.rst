@@ -1,0 +1,4 @@
+- Add classmethod to generate an array layout from a CASA NRAO Measurement Set
+- Fix some docstrings
+- Add casadata initialization to CI workflow
+- Downgrade minimum python version to 3.10

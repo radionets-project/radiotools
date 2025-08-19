@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy.coordinates import EarthLocation
+from casatools.table import table
+from numpy.typing import ArrayLike
 
 pd.options.display.float_format = "{:f}".format
 
@@ -131,7 +133,8 @@ class Layout:
         rel_to_site : str
             The name of the site the coordinates are
             supposed to be relative to. Has to be an
-            existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
+            existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         def gen_rng_file():
@@ -216,7 +219,6 @@ class Layout:
         if ref_frequency is not None:
             baselines /= 3e8 / ref_frequency
 
-        print(baselines[0].shape)
         ax.scatter(baselines[0], baselines[1], **plot_args)
         ax.set_xlabel("$u$ in m" if ref_frequency is None else "$u/\\lambda$")
         ax.set_ylabel("$v$ in m" if ref_frequency is None else "$v/\\lambda$")
@@ -307,10 +309,10 @@ class Layout:
             Whether to overwrite the file if it already exists
             (default is False).
         rel_to_site : str, optional
-            The name of the site the coordinates are supposed
-            to be saved relative to. Is ignored is `None` or
-            empty or `fmt` is not set to 'pyvisgen'. Has to be
-            an existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
+            The name of the site the coordinates are supposed to be saved relative to.
+            Is ignored if `None` or empty or `fmt` is not set to 'pyvisgen'.
+            Has to be an existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
 
         FORMATS = ["casa", "pyvisgen"]
@@ -461,7 +463,7 @@ class Layout:
             be assigned the same value.
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
-            Is ignored is `None` or empty or `fmt`.
+            Is ignored if `None` or empty.
             Has to be an existing site for
             :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
@@ -511,7 +513,7 @@ class Layout:
 
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
-            Is ignored is `None` or empty or `fmt`.
+            Is ignored if `None` or empty.
             Has to be an existing site for
             :func:`astropy.coordinates.EarthLocation.of_site()`.
         """
@@ -551,7 +553,71 @@ class Layout:
         return cls
 
     @classmethod
-    def from_url(cls, url: str, rel_to_site=None) -> "Layout":
+    def from_measurement_set(
+        cls,
+        root_path: str,
+        sefd: int | ArrayLike,
+        altitude: int | ArrayLike,
+        rel_to_site: str | None = None,
+    ):
+        antennas = table(root_path + "/ANTENNA/")
+
+        positions = antennas.getcol("POSITION")
+        stations = antennas.getcol("STATION")
+        dish_diameters = antennas.getcol("DISH_DIAMETER")
+
+        df = pd.DataFrame(
+            data={
+                "station_name": stations,
+                "x": positions[0],
+                "y": positions[1],
+                "z": positions[2],
+                "dish_dia": dish_diameters,
+                "el_low": 2,
+                "el_high": 90,
+                "sefd": np.ones_like(stations, dtype=np.uint64()) * sefd
+                if np.isscalar(sefd)
+                else np.asarray(sefd),
+                "altitude": np.ones_like(stations, dtype=np.uint64()) * altitude
+                if np.isscalar(altitude)
+                else np.asarray(altitude),
+            }
+        )
+
+        return Layout.from_dataframe(df=df, rel_to_site=rel_to_site)
+
+    @classmethod
+    def from_dataframe(cls, df: pd.DataFrame, rel_to_site: str | None = None):
+        """Import a layout from a given pandas DataFrame.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DateFrame containing the layout.
+
+        rel_to_site : str, optional
+            The name of the site the coordinates are relative to.
+            Is ignored is `None` or empty or `fmt`. Has to be an
+            existing site for `astropy.coordinates.EarthLocation.of_site()`.
+            Default: None
+        """
+        cls = cls()
+        cls.names = df["station_name"]
+        cls.cfg_path = "DataFrame"
+        cls.rel_to_site = rel_to_site
+        cls.x = df["x"]
+        cls.y = df["y"]
+        cls.z = df["z"]
+        cls.dish_dia = df["dish_dia"]
+        cls.el_low = df["el_low"]
+        cls.el_high = df["el_high"]
+        cls.sefd = df["sefd"]
+        cls.altitude = df["altitude"]
+
+        return cls
+
+    @classmethod
+    def from_url(cls, url: str, rel_to_site: str | None = None) -> "Layout":
         """Import a layout from a given URL.
 
         Parameters
@@ -560,8 +626,8 @@ class Layout:
             URL of the layout file.
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
-            Is ignored is `None` or empty or `fmt`. Has to be an
-            existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
+            Is ignored if `None` or empty. Has to be an
+            existing site for :func:`astropy.coordinates.EarthLocation.of_site()`
             Default: None
         """
         data = []
