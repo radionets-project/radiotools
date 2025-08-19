@@ -41,12 +41,11 @@ jobs:
         shell: bash -leo pipefail {0}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
- 
-      - name: Set up Python
-        uses: astral-sh/setup-uv@v6
+
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -76,21 +75,30 @@ jobs:
           tee -a ~/.bash_profile <<<'export PATH="$pythonLocation/bin:$PATH"'
 
       - name: Install dependencies
+        if: matrix.install-method == 'mamba'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
           python --version
-          uv pip install --system --upgrade pip
-          uv pip install --system --group tests -e .[casa]
+          uv pip install --upgrade pip
+          uv pip install --group tests -e .[casa]
+          uv pip freeze
+          uv pip list
+
+      - name: Install dependencies
+        if: matrix.install-method == 'pip'
+        run: |
+          uv venv .venv
+          source .venv/bin/activate
+          python --version
+          uv pip install --upgrade pip
+          uv pip install --group tests -e .[casa]
           uv pip freeze
           uv pip list
 
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
         run: micromamba list
-
-      - name: Initialize CASAData
-        run: |
-          mkdir -p ~/.casa/data/
-          python -c "import casatools;"
 
       - name: Tests
         run: |
@@ -110,7 +118,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
