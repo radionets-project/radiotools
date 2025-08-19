@@ -89,6 +89,7 @@ dev = [
 [project.scripts]
 radiotools-info = "radiotools.info:main"
 radiotools-vis = "radiotools.cli_tools.vis:main"
+radiotools-fits2ms = "radiotools.cli_tools.fits2ms:main"
 
 [tool.hatch.version]
 source = "vcs"
