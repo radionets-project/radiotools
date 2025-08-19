@@ -2,14 +2,14 @@
 Single files or all files inside a directory can be converted.
 """
 
-import click
-
 from pathlib import Path
-from natsort import natsorted
+
+import click
 import numpy as np
-from radiotools.utils import uvfits2ms, rmtree
-import subprocess
+from natsort import natsorted
 from tqdm.auto import tqdm
+
+from radiotools.utils import rmtree, uvfits2ms
 
 
 @click.command()

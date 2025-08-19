@@ -1,12 +1,12 @@
 import re
+import subprocess
+from pathlib import Path
 
 import numpy as np
 import requests
-import subprocess
 from astropy.io import fits
 from bs4 import BeautifulSoup
 from numpy.typing import ArrayLike
-from pathlib import Path
 
 
 def get_array_names(url: str) -> list[str]:
