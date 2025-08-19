@@ -53,7 +53,7 @@ jobs:
           environment-file: environment.yml
           cache-downloads: true
 
-      
+
       - name: Install dependencies
         uses: astral-sh/setup-uv@v6
         with:
