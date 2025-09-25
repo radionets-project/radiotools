@@ -1,4 +1,4 @@
-- Added the ``fiducial`` module to process and visualize cleaned radio images which are provided as FITS files. 
+- Added the ``fiducial`` module to process and visualize cleaned radio images which are provided as FITS files.
 
 - Switched CASA table import in ``src/radiotools/layouts/layouts.py`` from ``casatools.table`` to ``casacore.table``, and updated the `table` instantiation to include ``ack=False`` for compatibility with ``python-casacore``.
 
