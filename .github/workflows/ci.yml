@@ -104,10 +104,6 @@ jobs:
           uv sync --locked --extra casa --group docs
           git describe --tags
 
-      - name: Create CASA data directory
-        run: |
-          mkdir -p $HOME/.casa/data
-
       - name: Build docs
         run: |
           uv run make -C docs html
