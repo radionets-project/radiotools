@@ -18,13 +18,12 @@ from radiotools.utils import beam2pix, pix2beam
 
 class Fiducial:
     def __init__(self, fits_path: str):
-        """
-        Initialize a new fiducial image from a FITS file.
+        """Initialize a new fiducial image from a FITS file.
 
         Parameters
         ----------
 
-        path: str
+        path : str
             The path to the FITS file of the fiducial image.
 
         """
@@ -32,8 +31,7 @@ class Fiducial:
         self._fits_path = Path(fits_path).resolve()
 
     def get_hdu(self):
-        """
-        Get the Primary Header Data Unit (HDU) of the FITS file.
+        """Get the Primary Header Data Unit (HDU) of the FITS file.
 
         Returns
         -------
@@ -45,13 +43,12 @@ class Fiducial:
         return fits.open(self._fits_path)[0]
 
     def get_header(self, hdu: PrimaryHDU | None = None):
-        """
-        Get the FITS Header of the fiducial image.
+        """Get the FITS Header of the fiducial image.
 
         Parameters
         ----------
 
-        hdu: astropy.io.fits.PrimaryHDU | None, optional
+        hdu : astropy.io.fits.PrimaryHDU | None, optional
             The Primary Header Data Unit of the FITS file. Can be provided
             to avoid consecutive opening and closing of the file.
             If set to ``None``, the file will be opened.
@@ -68,13 +65,12 @@ class Fiducial:
         return hdu.header
 
     def get_metadata(self, hdu: PrimaryHDU | None = None):
-        """
-        Get the metadata of the fiducial image.
+        """Get the metadata of the fiducial image.
 
         Parameters
         ----------
 
-        hdu: astropy.io.fits.PrimaryHDU | None, optional
+        hdu : astropy.io.fits.PrimaryHDU | None, optional
             The Primary Header Data Unit of the FITS file. Can be provided
             to avoid consecutive opening and closing of the file.
             If set to ``None``, the file will be opened.
@@ -119,27 +115,35 @@ class Fiducial:
         self,
         ra_incr_right: bool = True,
         flux_unit: str | None = None,
+        allow_unit_prefixes: bool = True,
         hdu: PrimaryHDU | None = None,
     ):
-        """
-        Get the image data of the fiducial image.
+        """Get the image data of the fiducial image.
 
         Parameters
         ----------
 
-        ra_incr_right: bool, optional
+        ra_incr_right : bool, optional
             Determines whether the image should be returned
             with the Right Ascension (RA) increasing to the
             right like a normal coordinate axis.
             Default is ``True``.
 
-        flux_unit: str, optional
+        flux_unit : str, optional
             The flux density unit the image is supposed to have.
             Valid values are: ``'Jy/pix'``, ``"Jy/beam"`` or ``None``.
+            The nominator of the unit (``'Jy'``) may also include prefixes like
+            ``'m'`` for milli etc. if the parameter ``allow_unit_prefixes`` is set
+            to ``True``. Otherwise an error will be raised.
             If set to ``None``, the unit from the FITS file will be used.
             Default is ``None``.
 
-        hdu: astropy.io.fits.PrimaryHDU | None, optional
+        allow_unit_prefixes : bool, optional
+            Whether the Jansky unit (nominator of the ``flux_unit``) may include
+            unit prefixes.
+            Default is ``True``.
+
+        hdu : astropy.io.fits.PrimaryHDU | None, optional
             The Primary Header Data Unit of the FITS file. Can be provided
             to avoid consecutive opening and closing of the file.
             If set to ``None``, the file will be opened.
@@ -165,15 +169,30 @@ class Fiducial:
         if flux_unit is None or flux_unit == header["BUNIT"]:
             return image
 
+        flux_unit_components = flux_unit.split("/")
+        flux_unit_nominator = units.Unit(flux_unit_components[0])
+
+        if not allow_unit_prefixes and flux_unit_nominator != "Jy":
+            raise ValueError(
+                "The flux density unit may not contain prefixes if "
+                "'allow_unit_prefixes=False'."
+            )
+
+        prev_flux_unit_nominator = units.Unit(header["BUNIT"].split("/")[0])
+
+        image *= (1 * prev_flux_unit_nominator).to(flux_unit_nominator).value
+
         convert_args = dict(
             cell_size=np.abs(header["CDELT1"]), bmin=header["BMIN"], bmaj=header["BMAJ"]
         )
 
-        match flux_unit:
-            case "Jy/pix":
+        match flux_unit_components[1]:
+            case "pix":
                 return beam2pix(image=image, **convert_args)
-            case "Jy/beam":
+            case "beam":
                 return pix2beam(image=image, **convert_args)
+            case _:
+                raise ValueError("The provided flux density unit is invalid!")
 
     def preprocess(
         self,
@@ -184,11 +203,11 @@ class Fiducial:
         rms_cut_args: dict | None = None,
         dbscan_args: dict | None = None,
         output_path: str | None = None,
-        flux_unit: str = "Jy/pix",
+        flux_unit: str | None = None,
+        source_name: str | None = None,
         overwrite: bool = False,
     ):
-        """
-        Preprocesses the fiducial image by cropping and cleaning it.
+        """Preprocesses the fiducial image by cropping and cleaning it.
 
         Parameters
         ----------
@@ -224,8 +243,10 @@ class Fiducial:
 
         flux_unit : str, optional
             The flux density unit in which the image should be saved.
-            Available values are ``Jy/beam`` and ``Jy/pix``
-            Default is ``Jy/pix``.
+            Available values are ``'Jy/beam'``, ``'Jy/pix'`` or ``None``.
+            The unit may not contain unit prefixes!
+            If set to ``None``, the unit from the original FITS file will be used.
+            Default is ``None``.
 
         overwrite : bool, optional
             Whether to overwrite an existing file.
@@ -263,7 +284,10 @@ class Fiducial:
         hdu = self.get_hdu()
 
         fiducial = self.get_image(
-            ra_incr_right=ra_incr_right, flux_unit=flux_unit, hdu=hdu
+            ra_incr_right=ra_incr_right,
+            flux_unit=flux_unit,
+            hdu=hdu,
+            allow_unit_prefixes=False,
         )
 
         header = self.get_header(hdu=hdu)
@@ -273,6 +297,9 @@ class Fiducial:
             np.abs(header["CDELT1"]) if ra_incr_right else -np.abs(header["CDELT1"])
         )
         header["BUNIT"] = flux_unit
+
+        if source_name is not None:
+            header["OBJECT"] = source_name
 
         if clean:
             fiducial = rms_cut(fiducial, **rms_cut_args)
@@ -296,6 +323,7 @@ class Fiducial:
         img_size = metadata["img_size"]
         cell_size = metadata["cell_size"]
 
+        # Adjust physical center of image
         header["CRVAL1"] = (
             metadata["img_ra"] + (center_pixels[0] - img_size // 2) * cell_size / 3600
         ) % 360
@@ -325,7 +353,7 @@ class Fiducial:
         use_relative_ax: bool = True,
         flux_unit: str | None = None,
         display_title: bool = True,
-        norm: str | matplotlib.colors.Normalize = None,
+        norm: str | matplotlib.colors.Normalize | None = None,
         colorbar_shrink: float = 1,
         cmap: str | matplotlib.colors.Colormap | None = "inferno",
         plot_args: dict = None,
@@ -335,12 +363,103 @@ class Fiducial:
         fig: matplotlib.figure.Figure | None = None,
         ax: matplotlib.axes.Axes | None = None,
     ):
-        """
-        Plots the uncleaned model
+        """Plots the uncleaned model
 
         Parameters
         ----------
+        display_beam : bool, optional
+            Whether to display size and orientation of the beam as
+            a white ellipse in the lower left of the image.
+            Default is ``True``.
+        ra_incr_right : bool, optional
+            Whether the Right Ascension coordinate (x-axis) should
+            increase to the right.
+            Default is ``True``.
+        ax_unit : str | astropy.units.Unit, optional
+            The unit in which to show the ticks of the x and y-axes in.
+            The y-axis is the Declination (DEC) and the x-axis is the
+            Right Ascension (RA).
+            The unit has to be given as a string or an ``astropy.units.Unit``.
+            The string must correspond to the string representation of an
+            ``astropy.units.Unit``.
 
+            Valid units are either ``pixel`` or angle units like ``arcsec``, ``degree``
+            etc.. Default is ``pixel``.
+        use_relative_ax : bool, optional
+            Whether to display the coordinate relative to the center of the image
+            (not the source position).
+            Default is ``True``.
+        flux_unit : str | None, optional
+            The flux density unit the image is supposed to have.
+            Valid values are: ``'Jy/pix'``, ``"Jy/beam"`` or ``None``.
+            The nominator of the unit (``'Jy'``) may also include prefixes like
+            ``'m'`` for milli etc..
+            If set to ``None``, the unit from the FITS file will be used.
+            Default is ``None``.
+        display_title: bool, optional
+            Whether to display the name of the source as the title of the plot.
+            Default is ``True``.
+        norm: str | matplotlib.colors.Normalize | None, optional
+            The name of the norm or the norm itself.
+            Possible values are:
+
+            - ``log``:          Returns a logarithmic norm with clipping on (!), meaning
+                                values above the maximum will be mapped to the maximum
+                                and values below the minimum will be mapped to the
+                                minimum, thus avoiding the appearance of a colormaps
+                                'over' and 'under' colors (e.g. in case of negative
+                                values). Depending on the use case this is desirable but
+                                in case that it is not, one can set the norm to
+                                ``log_noclip`` or provide a custom norm.
+
+            - ``log_noclip``:   Returns a logarithmic norm with clipping off.
+
+            - ``centered``:     Returns a linear norm which centered around zero.
+
+            - ``sqrt``:         Returns a power norm with exponent 0.5, meaning the
+                                square-root of the values.
+
+            - other:            A value not declared above will be returned as is,
+                                meaning that this could be any value which exists in
+                                matplotlib itself.
+
+            Default is ``None``, meaning no norm will be applied.
+        colorbar_shrink: float, optional
+            The shrink parameter of the colorbar. This can be needed if the plot is
+            included as a subplot to adjust the size of the colorbar.
+            Default is ``1``, meaning original scale.
+        cmap: str | matplotlib.colors.Colormap, optional
+            The colormap to be used for the plot.
+            Default is ``'inferno'``.
+        plot_args : dict, optional
+            The additional arguments passed to the scatter plot.
+            Default is ``{"color":"royalblue"}``.
+        fig_args : dict, optional
+            The additional arguments passed to the figure.
+            If a figure object is given in the ``fig`` parameter, this
+            value will be discarded.
+            Default is ``{}``.
+        save_to : str | None, optional
+            The name of the file to save the plot to.
+            Default is ``None``, meaning the plot won't be saved.
+        save_args : dict, optional
+            The additional arguments passed to the ``fig.savefig`` call.
+            Default is ``{"bbox_inches":"tight"}``.
+        fig : matplotlib.figure.Figure | None, optional
+            A custom figure object.
+            If set to ``None``, the ``ax`` parameter also has to be ``None``!
+            Default is ``None``.
+        ax : matplotlib.axes.Axes | None, optional
+            A custom axes object.
+            If set to ``None``, the ``fig`` parameter also has to be ``None``!
+            Default is ``None``.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure object.
+        ax : matplotlib.axes.Axes
+            The axes object.
         """
 
         if plot_args is None:
@@ -358,11 +477,11 @@ class Fiducial:
         unit = units.Unit(ax_unit)
 
         hdu = self.get_hdu()
-
         metadata = self.get_metadata(hdu=hdu)
 
-        image = self.get_image(flux_unit=flux_unit, ra_incr_right=True, hdu=hdu)
         flux_unit = flux_unit if flux_unit is not None else metadata["flux_unit"]
+
+        image = self.get_image(flux_unit=flux_unit, ra_incr_right=True, hdu=hdu)
 
         img_size = image.shape[0]
         cell_size = metadata["cell_size"]
@@ -385,8 +504,8 @@ class Fiducial:
                 extent[2:] += center_pos[1]
                 label_prefix = ""
 
-            ax.set_xlabel(f"{label_prefix}RA in {unit}")
-            ax.set_ylabel(f"{label_prefix}DEC in {unit}")
+            ax.set_xlabel(f"{label_prefix}Right Ascension / {unit}")
+            ax.set_ylabel(f"{label_prefix}Declination / {unit}")
 
             extent = extent.value
 
@@ -428,6 +547,9 @@ class Fiducial:
 
             position = np.array([img_size * 0.1] * 2)
 
+            if not ra_incr_right:
+                position[0] = img_size * 0.9
+
             if unit != units.pixel:
                 bmin = bmin.to(unit).value
                 bmaj = bmaj.to(unit).value
@@ -452,10 +574,11 @@ class Fiducial:
             im,
             ax=ax,
             shrink=colorbar_shrink,
-            label=f"Flux Density in {flux_unit}",
+            label=f"Flux Density / {flux_unit}",
         )
 
-        ax.set_title(metadata["source_name"])
+        if display_title:
+            ax.set_title(metadata["source_name"])
 
         if save_to is not None:
             fig.savefig(save_to, **save_args)
@@ -498,7 +621,7 @@ def _configure_axes(
         raise KeyError("The parameters ax and fig have to be both None or not None!")
 
     if ax is None:
-        fig, ax = plt.subplots(layout="constrained", **fig_args)
+        fig, ax = plt.subplots(layout="tight", **fig_args)
 
     return fig, ax
 
