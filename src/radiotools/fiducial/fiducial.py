@@ -158,7 +158,7 @@ class Fiducial:
 
         hdu = hdu if hdu is not None else self.get_hdu()
 
-        image = hdu.data[0, 0]
+        image = hdu.data[0, 0].copy()
         header = self.get_header(hdu=hdu)
 
         if (header["CDELT1"] < 0 and ra_incr_right) or (
@@ -166,7 +166,7 @@ class Fiducial:
         ):
             image = image[:, ::-1]
 
-        if flux_unit is None or flux_unit == header["BUNIT"]:
+        if flux_unit is None or flux_unit.lower() == header["BUNIT"].lower():
             return image
 
         flux_unit_components = flux_unit.split("/")
@@ -178,9 +178,12 @@ class Fiducial:
                 "'allow_unit_prefixes=False'."
             )
 
-        prev_flux_unit_nominator = units.Unit(header["BUNIT"].split("/")[0])
+        prev_flux_unit_nominator = units.Unit("Jy")
 
         image *= (1 * prev_flux_unit_nominator).to(flux_unit_nominator).value
+
+        if flux_unit_components[1].lower() == header["BUNIT"].split("/")[1].lower():
+            return image
 
         convert_args = dict(
             cell_size=np.abs(header["CDELT1"]), bmin=header["BMIN"], bmaj=header["BMAJ"]
@@ -194,10 +197,38 @@ class Fiducial:
             case _:
                 raise ValueError("The provided flux density unit is invalid!")
 
+    def get_maximum_info(
+        self,
+        unit: str | units.Unit = "deg",
+        hdu: PrimaryHDU | None = None,
+    ):
+        hdu = self.get_hdu() if hdu is not None else self.get_hdu()
+        image = self.get_image(hdu=hdu)
+        header = self.get_header(hdu=hdu)
+        metadata = self.get_metadata(hdu=hdu)
+
+        unit = units.Unit(unit)
+
+        if unit.physical_type != "angle":
+            raise ValueError("The given unit is not an angle unit (e.g. deg, arcsec)!")
+
+        brightest_pixels = np.array(np.unravel_index(image.argmax(), image.shape))[::-1]
+        brightest_unit = (
+            (
+                (brightest_pixels - np.array(image.shape)[::-1] // 2)
+                * metadata["cell_size"]
+                / 3600
+                + np.array([header["CRVAL1"], header["CRVAL2"]])
+            )
+            * units.deg
+        ).to(unit)
+
+        return image.max(), brightest_pixels * units.pixel, brightest_unit
+
     def preprocess(
         self,
         clean: bool,
-        remove_negatives: bool,
+        remove_negatives: bool = True,
         ra_incr_right: bool = True,
         crop: tuple[list[float | None]] = ([None, None], [None, None]),
         rms_cut_args: dict | None = None,
@@ -215,9 +246,10 @@ class Fiducial:
         clean : bool
             Whether to perform noise cleaning on the image.
 
-        remove_negatives : bool
+        remove_negatives : bool, optional
             Whether to set negative values to zero.
             If ``clean=True`` this value is automatically ``True``.
+            Default is ``True``.
 
         crop : tuple[list[float | None]], optional
             The crop of the image. This has to have the format
@@ -307,21 +339,21 @@ class Fiducial:
         elif remove_negatives:
             fiducial[fiducial < 0] = 0
 
+        img_size = metadata["img_size"]
+        cell_size = metadata["cell_size"]
+
+        crop_max = np.array([[0, img_size], [0, img_size]])
+        crop = np.array(crop)
+
+        for i in range(2):
+            for j in range(2):
+                crop[i, j] = crop[i, j] if crop[i, j] is not None else crop_max[i, j]
+
         if crop[0][1] - crop[0][0] != crop[1][1] - crop[1][0]:
             raise IndexError("The given crop limits have to create a quadratic image!")
 
-        brightest = np.array(np.unravel_index(fiducial.argmax(), fiducial.shape))[::-1]
-        brightest_unit = (brightest - np.ones(2) * 1500) * metadata[
-            "cell_size"
-        ] / 3600 + np.array([metadata["img_ra"], metadata["img_dec"]])
-        print("Max brightness", brightest, brightest_unit, "deg")
-
         fiducial = fiducial[crop[1][0] : crop[1][1], crop[0][0] : crop[0][1]]
         center_pixels = ((crop[0][0] + crop[0][1]) // 2, (crop[1][0] + crop[1][1]) // 2)
-        print("center", center_pixels)
-
-        img_size = metadata["img_size"]
-        cell_size = metadata["cell_size"]
 
         # Adjust physical center of image
         header["CRVAL1"] = (
@@ -333,12 +365,6 @@ class Fiducial:
             + (center_pixels[1] - img_size // 2) * cell_size / 3600
             + 90
         ) % 180 - 90
-
-        brightest = np.array(np.unravel_index(fiducial.argmax(), fiducial.shape))[::-1]
-        brightest_unit = (brightest - np.array(fiducial.shape)[::-1] // 2) * metadata[
-            "cell_size"
-        ] / 3600 + np.array([header["CRVAL1"], header["CRVAL2"]])
-        print("Max brightness", brightest, brightest_unit, "deg")
 
         hdu.data = fiducial[None, None]
         hdu.writeto(processed_path, overwrite=overwrite)

@@ -40,6 +40,7 @@ dependencies = [
   "bs4",
   "toml>=0.10.2",
   "python-casacore>=3.7.1",
+  "radio_stats@git+https://github.com/radionets-project/radio_stats",
 ]
 
 [dependency-groups]

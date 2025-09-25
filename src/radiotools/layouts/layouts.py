@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy.coordinates import EarthLocation
-from casacore.table import table
+from casacore.tables import table
 from numpy.typing import ArrayLike
 
 pd.options.display.float_format = "{:f}".format

@@ -31,3 +31,7 @@ We recommend using a conda/mamba environment with python version ``>=3.11`` and 
 
 If you want to use features from the NRAO `CASAtools <https://pypi.org/project/casatools/>`_ package,
 make sure you are using python 3.10 or 3.11.
+
+Acknowledgments
+===============
+This package uses FITS files from
