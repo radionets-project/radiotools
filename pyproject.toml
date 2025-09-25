@@ -98,6 +98,9 @@ version-file = "src/radiotools/_version.py"
 [tool.hatch.build.targets.wheel]
 include = ["src/radiotools"]
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.build.targets.wheel.sources]
 "src/radiotools" = "radiotools"
 
