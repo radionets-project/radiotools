@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy.coordinates import EarthLocation
-from casatools.table import table
+from casacore.tables import table
 from numpy.typing import ArrayLike
 
 pd.options.display.float_format = "{:f}".format
@@ -560,7 +560,7 @@ class Layout:
         altitude: int | ArrayLike,
         rel_to_site: str | None = None,
     ):
-        antennas = table(root_path + "/ANTENNA/")
+        antennas = table(root_path + "/ANTENNA/", ack=False)
 
         positions = antennas.getcol("POSITION")
         stations = antennas.getcol("STATION")
