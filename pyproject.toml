@@ -154,7 +154,7 @@ extend-select = [
   "B",   # flake8-bugbear
   "SIM", # flake8-simplify
 ]
-ignore = ["B905"]
+ignore = ["B905", "UP038"]
 
 fixable = ["ALL"]
 unfixable = []
