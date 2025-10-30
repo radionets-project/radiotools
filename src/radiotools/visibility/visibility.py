@@ -81,7 +81,6 @@ class SourceVisibility:
         min_alt: float = 15.0,
         max_alt: float = 85.0,
         print_optimal_date: bool = False,
-        plot_locale: Literal["EN", "DE"] = "EN",
     ) -> None:
         """Initializes the class with source and observation information.
 
@@ -110,8 +109,6 @@ class SourceVisibility:
         print_optimal_date: bool, optional
             If `True` prints the optimal date for the observation. Default: ``False``
         """
-        self.plot_locale = plot_locale
-
         if isinstance(target, tuple) or (
             isinstance(target, np.ndarray) and target.size == 2
         ):
@@ -337,6 +334,7 @@ class SourceVisibility:
         *,
         descr_text: bool = True,
         legend: bool = True,
+        locale: Literal["EN", "DE"] = "EN",
     ) -> tuple:
         """Plots the visibility of the source at the given
         time range. Also plots the positions of the sun and moon
@@ -363,6 +361,7 @@ class SourceVisibility:
         """
         self.descr_text = descr_text
         self.legend = legend
+        self.plot_locale = locale
 
         colors = iter(colors)
 
