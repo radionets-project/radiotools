@@ -2,6 +2,7 @@
 
 import datetime
 from collections import namedtuple
+from typing import Literal
 
 import astropy.units as u
 import dateutil.parser
@@ -80,6 +81,7 @@ class SourceVisibility:
         min_alt: float = 15.0,
         max_alt: float = 85.0,
         print_optimal_date: bool = False,
+        plot_locale: Literal["EN", "DE"] = "EN",
     ) -> None:
         """Initializes the class with source and observation information.
 
@@ -108,6 +110,8 @@ class SourceVisibility:
         print_optimal_date: bool, optional
             If `True` prints the optimal date for the observation. Default: ``False``
         """
+        self.plot_locale = plot_locale
+
         if isinstance(target, tuple) or (
             isinstance(target, np.ndarray) and target.size == 2
         ):
@@ -227,6 +231,16 @@ class SourceVisibility:
         ax : matplotlib.axes.Axes.axis
             Axis object of the current figure.
         """
+        locale_label_strings = {
+            "EN": dict(xlabel="Time / hours", ylabel="Altitude / deg"),
+            "DE": dict(xlabel="Zeit / Stunden", ylabel="Höhenwinkel / Grad"),
+        }
+
+        locale_legend_strings = {
+            "EN": dict(title="Telescope ID"),
+            "DE": dict(title="Teleskop-Nummer"),
+        }
+
         # axis ticks
         ax["A"].set_xticks(
             ax["A"].get_xticks(), ax["A"].get_xticklabels(), rotation=45, ha="right"
@@ -234,8 +248,7 @@ class SourceVisibility:
 
         # further axis settings
         ax["A"].set(
-            xlabel="UT Time / hours",
-            ylabel="Altitude / deg",
+            **locale_label_strings[self.plot_locale],
             ylim=(0, 90),
             title=self.name,
         )
@@ -253,22 +266,37 @@ class SourceVisibility:
                 labels=labels,
                 loc="upper left",
                 handlelength=4,
-                title="Telescope ID",
+                title=locale_legend_strings[self.plot_locale],
             )
 
         # Text is drawn on axis "B"
         text_anchor = ax["B"].get_window_extent()
 
+        locale_text = {
+            "EN": "Solid lines indicate that the source\n"
+            + "is visible. The visibility window is\n"
+            + f"limited to a range between {self.min_alt} deg\n"
+            + f"and {self.max_alt} deg.",
+            "DE": "Durchgezogene Linien zeigen, dass die Quelle\n"
+            + "sichtbar ist. Das Sichtbarkeitsfenster ist\n"
+            + f"zwischen {self.min_alt}° und {self.max_alt}°"
+            + "limitiert.",
+        }
+
+        locale_text_large_array = {
+            "EN": " For array layouts with\n"
+            + "more than 10 stations, only the first\n"
+            + "station (ID 0) is shown.",
+            "DE": " Für Anordnungen mit mehr als\n"
+            + "10 Stationen wird nur die erste Station\n"
+            + "(Index 0) gezeigt.",
+        }
+
         if self.descr_text:
-            text = "Solid lines indicate that the source\n"
-            text += "is visible. The visibility window is\n"
-            text += f"limited to a range between {self.min_alt} deg\n"
-            text += f"and {self.max_alt} deg."
+            text = locale_text[self.plot_locale]
 
             if self.location.size > 10:
-                text += " For array layouts with\n"
-                text += "more than 10 stations, only the first\n"
-                text += "station (ID 0) is shown."
+                text += locale_text_large_array[self.plot_locale]
 
             ax["B"].annotate(
                 text,
