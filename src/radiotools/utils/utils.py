@@ -2,7 +2,6 @@ import re
 
 import numpy as np
 import requests
-from astropy.io import fits
 from bs4 import BeautifulSoup
 from numpy.typing import ArrayLike
 
@@ -51,25 +50,57 @@ def rms(a: ArrayLike, *, axis: int | None = 0):
     return np.sqrt(np.mean(a**2, axis=axis))
 
 
-def img2jansky(image: ArrayLike, header: fits.Header):
+def beam2pix(
+    image: ArrayLike,
+    cell_size: float,
+    bmin: float,
+    bmaj: float,
+):
     """Converts an image from Jy/beam to Jy/px.
 
     Parameters
     ----------
     image : array_like
         Input image that is to be converted.
-    header : :class:`astropy.io.fits.header.Header`
-        FITS file header belonging to the respective image.
+    cell_size : float
+        The physical size of one pixel in arcseconds.
+    bmin : float
+        The minor axis of the beam in arcseconds.
+    bmaj : float
+        The major axis of the beam in arcseconds.
 
     Returns
     -------
     array_like
-        Converted image in units of Jy/px.
+        Converted image in units of Jy/pix.
     """
-    return (
-        4
-        * image
-        * np.log(2)
-        * np.power(header["CDELT1"], 2)
-        / (np.pi * header["BMIN"] * header["BMAJ"])
-    )
+
+    return image * (4 * np.log(2) * np.power(cell_size, 2) / (np.pi * bmin * bmaj))
+
+
+def pix2beam(
+    image: ArrayLike,
+    cell_size: float,
+    bmin: float,
+    bmaj: float,
+):
+    """Converts an image from Jy/pix to Jy/beam.
+
+    Parameters
+    ----------
+    image : array_like
+        Input image that is to be converted.
+    cell_size : float
+        The physical size of one pixel in arcseconds.
+    bmin : float
+        The minor axis of the beam in arcseconds.
+    bmaj : float
+        The major axis of the beam in arcseconds.
+
+    Returns
+    -------
+    array_like
+        Converted image in units of Jy/beam.
+    """
+
+    return image / (4 * np.log(2) * np.power(cell_size, 2) / (np.pi * bmin * bmaj))

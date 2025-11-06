@@ -39,10 +39,9 @@ dependencies = [
   "requests",
   "bs4",
   "toml>=0.10.2",
+  "python-casacore>=3.7.1",
+  "radio_stats@git+https://github.com/radionets-project/radio_stats",
 ]
-
-[project.optional-dependencies]
-casa = ["casatools ~=6.6"]
 
 [dependency-groups]
 tests = [
@@ -98,6 +97,9 @@ version-file = "src/radiotools/_version.py"
 
 [tool.hatch.build.targets.wheel]
 include = ["src/radiotools"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel.sources]
 "src/radiotools" = "radiotools"
