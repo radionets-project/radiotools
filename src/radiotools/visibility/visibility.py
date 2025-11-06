@@ -263,7 +263,7 @@ class SourceVisibility:
                 labels=labels,
                 loc="upper left",
                 handlelength=4,
-                title=locale_legend_strings[self.plot_locale],
+                **locale_legend_strings[self.plot_locale],
             )
 
         # Text is drawn on axis "B"
