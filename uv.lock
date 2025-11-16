@@ -322,35 +322,6 @@ wheels = [
 ]
 
 [[package]]
-name = "casaconfig"
-version = "1.3.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "certifi" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/22/53/de4d38d9532abea17f7af3a2e2871a18963b9685fecd31d7fa2b2a5bee29/casaconfig-1.3.1.tar.gz", hash = "sha256:6b04b2b820e6b47177cb680b9db8505ddff2a9451eca533e7f2f80bbaf666e79", size = 53054, upload-time = "2025-04-28T22:55:45.77Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/03/5069c7057e5a03254d90acd8c5c7ec350b7611b932aec0fb7945b56a51ad/casaconfig-1.3.1-py3-none-any.whl", hash = "sha256:9bd36b0ef780d72ad78724bcde545041b973a2192ef7135320264ccfe155b250", size = 69620, upload-time = "2025-04-28T22:55:44.057Z" },
-]
-
-[[package]]
-name = "casatools"
-version = "6.7.0.31"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "casaconfig" },
-    { name = "numpy" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/4c/4f4bc83747063f76bc66e66569dc27c42349afeb32de86b854338d100a58/casatools-6.7.0.31-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:15e87d764e7915bdfbe34de682bde1a1aa5a98a8b371697b89ebd71e41b83245", size = 73295778, upload-time = "2025-02-25T17:20:56.731Z" },
-    { url = "https://files.pythonhosted.org/packages/42/7a/574418bcbec8d622ba773c20b4a1b0ec876b40c41e575236e260070bb090/casatools-6.7.0.31-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:6be2aad5066b54b007f26701858a97357c4dc6e819e1ed008b8ce62de82e6c88", size = 182100119, upload-time = "2025-02-25T17:22:09.092Z" },
-    { url = "https://files.pythonhosted.org/packages/bc/2f/eea5cee81ea74adc42d2c23d6f053f6b72e3b9dbba405f696e1a4f52e335/casatools-6.7.0.31-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:f54e8ed8649fd208079e09e757a8fc56e0c22b9919f92cdbb2297d6aa03f8f24", size = 73297205, upload-time = "2025-02-25T17:22:46.039Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/18/eed8145a606e8a309009b428be12affce8f08f8f7ac75dfb998e87e0fbce/casatools-6.7.0.31-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:273c80c9f378bb2fcaef29ccaae06cd10369e5a48b1771e56dc00574d90314ff", size = 182297332, upload-time = "2025-02-25T17:23:57.125Z" },
-    { url = "https://files.pythonhosted.org/packages/4e/aa/65629384da073da8fb20ccb834a0cc45d9e101014908578ff61d5dc5666e/casatools-6.7.0.31-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:aa4f21caf3dd30bc8d923a80cec0a0c1ff3a856b650ffcc3495225d108c65141", size = 73309634, upload-time = "2025-02-25T17:24:35.796Z" },
-    { url = "https://files.pythonhosted.org/packages/18/3d/1642b179ec16efc13685b3d7512fb198d7f17c289f9fcb0226c8b6e88219/casatools-6.7.0.31-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:3a9875fe68d37494f136666c401951c1f48717f8275ec79135d0896e9b4a3a02", size = 182723987, upload-time = "2025-02-25T17:25:47.482Z" },
-]
-
-[[package]]
 name = "certifi"
 version = "2025.8.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2377,6 +2348,21 @@ wheels = [
 ]
 
 [[package]]
+name = "python-casacore"
+version = "3.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/24/93/2ccc937c1609d1ab051b6ca86b51983b94d79f9f097558ba11c9023d74e3/python_casacore-3.7.1.tar.gz", hash = "sha256:6c4e060cba73c0ab9d944eb4b6aa97f20c12b761e671587f313bfc59e3a775c3", size = 288525, upload-time = "2025-04-25T10:31:15.824Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/53/6d16c1e7a92da0ead89c2d789b63d4bb69aeb37a4a0a3ef2feed54a8ecf1/python_casacore-3.7.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1e5101fc6240b9283d4b7027c92125e6f267d507d77350101451fd7200e0645f", size = 46734093, upload-time = "2025-04-09T15:32:18.298Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/60/1b6b300b8c67418962654fd56282a4e09e2141b4384ce5af0b27eda80c0e/python_casacore-3.7.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5734c96278022600fe43d6b7488f045762ffb305bcca6779c8caf6f1a40b0555", size = 46733801, upload-time = "2025-04-09T15:32:22.556Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/1d/39f81cba931f4d32d22fae231c776bbf28f4ca7ae61a12cd6836dd31b793/python_casacore-3.7.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2805353e3f12d6c03c20267cfa6539b256c43f382ccb0f84436d99f36bd83520", size = 46739724, upload-time = "2025-04-09T15:32:26.599Z" },
+    { url = "https://files.pythonhosted.org/packages/25/d8/600714b9232740ee9d6607d52493278db19442df01d5aa7ffed2a67941bb/python_casacore-3.7.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9f356b7f0e9a9dfb4a2d9e710586bada676a2f6c5fcf476e1f5fb6a86a01961a", size = 46739792, upload-time = "2025-04-29T18:04:19.019Z" },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -2568,14 +2554,10 @@ dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "python-casacore" },
     { name = "requests" },
     { name = "rich" },
     { name = "toml" },
-]
-
-[package.optional-dependencies]
-casa = [
-    { name = "casatools" },
 ]
 
 [package.dev-dependencies]
@@ -2647,15 +2629,14 @@ tests = [
 requires-dist = [
     { name = "astropy", specifier = ">=6.1.0" },
     { name = "bs4" },
-    { name = "casatools", marker = "extra == 'casa'", specifier = "~=6.6" },
     { name = "matplotlib", specifier = "~=3.0" },
     { name = "numpy", specifier = "~=1.16" },
     { name = "pandas", specifier = ">=2.0" },
+    { name = "python-casacore", specifier = ">=3.7.1" },
     { name = "requests" },
     { name = "rich", specifier = ">=13.0" },
     { name = "toml", specifier = ">=0.10.2" },
 ]
-provides-extras = ["casa"]
 
 [package.metadata.requires-dev]
 dev = [

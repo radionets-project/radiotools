@@ -1,0 +1,1 @@
+- Added German locale option to source visibility plot

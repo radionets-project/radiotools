@@ -34,7 +34,7 @@ jobs:
         shell: bash -leo pipefail {0}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -85,19 +85,19 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.11"
 
       - name: Install doc dependencies
         run: |
           sudo apt update --yes && sudo apt install --yes git
-          uv sync --locked --extra casa --group docs
+          uv sync --locked --group docs
           git describe --tags
 
       - name: Build docs

@@ -1,0 +1,1 @@
+- Removed the gridding module since it is now part of [``pyvisgrid``](https://github.com/radionets-project/pyvisgrid)
