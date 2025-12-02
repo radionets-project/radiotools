@@ -1,0 +1,9 @@
+- Added the ``fiducial`` module to process and visualize cleaned radio images which are provided as FITS files.
+
+- Switched CASA table import in ``src/radiotools/layouts/layouts.py`` from ``casatools.table`` to ``casacore.table``, and updated the `table` instantiation to include ``ack=False`` for compatibility with ``python-casacore``.
+
+- Added ``python-casacore>=3.7.1`` to the main dependencies in `pyproject.toml`, and removed the optional CASA dependency group.
+
+- Replaced the ``img2jansky`` function with two new functions, ``beam2pix`` and ``pix2beam``, for converting between Jy/beam and Jy/pix units in ``src/radiotools/utils/utils.py``. Updated the corresponding exports in ``src/radiotools/utils/__init__.py``.
+
+- Removed the ``src/radiotools/measurements/measurements.py`` file and its corresponding import/export from ``src/radiotools/measurements/__init__.py``.
