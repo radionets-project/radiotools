@@ -89,6 +89,9 @@ class Fiducial:
         img_size = self.get_image(hdu=hdu).shape[0]
         cell_size = np.abs(header["CDELT1"] * 3600)
 
+        obs_ra = header["CRVAL1"] if "OBSRA" not in header else header["OBSRA"]
+        obs_dec = header["CRVAL2"] if "OBSDEC" not in header else header["OBSDEC"]
+
         return {
             "source_name": header["OBJECT"],
             "observatory": header["TELESCOP"],
@@ -98,8 +101,8 @@ class Fiducial:
             "frequency": header["CRVAL3"],
             "bandwidth": header["CDELT3"],
             "wavelength": c.value / header["CRVAL3"],
-            "src_ra": header["OBSRA"],
-            "src_dec": header["OBSDEC"],
+            "src_ra": obs_ra,
+            "src_dec": obs_dec,
             "img_ra": header["CRVAL1"],
             "img_dec": header["CRVAL2"],
             "obs_date": header["DATE-OBS"],
@@ -235,6 +238,7 @@ class Fiducial:
         dbscan_args: dict | None = None,
         output_path: str | None = None,
         flux_unit: str | None = None,
+        fov: float | None = None,
         source_name: str | None = None,
         overwrite: bool = False,
     ):
@@ -279,6 +283,17 @@ class Fiducial:
             The unit may not contain unit prefixes!
             If set to ``None``, the unit from the original FITS file will be used.
             Default is ``None``.
+
+        fov : float | None, optional
+            The field of view of the observation. This can be changed by setting this
+            value to a not-``None`` float. If a crop is performed, the fov will be
+            assumed for the cropped image!
+            If set to ``None``, the fov from the original FITS file will be used.
+            Default is ``None``.
+
+        source_name : str | NOne, optional
+            The name of the observed source. If set to ``None``, the name from the FITS
+            file will be used. Default is ``None``.
 
         overwrite : bool, optional
             Whether to overwrite an existing file.
@@ -325,9 +340,26 @@ class Fiducial:
         header = self.get_header(hdu=hdu)
         metadata = self.get_metadata(hdu=hdu)
 
+        img_size = metadata["img_size"]
+
+        crop_max = np.array([[0, img_size], [0, img_size]])
+        crop = np.array(crop)
+
+        for i in range(2):
+            for j in range(2):
+                crop[i, j] = crop[i, j] if crop[i, j] is not None else crop_max[i, j]
+
+        cropped_img_size = (crop[0][1] - crop[0][0], crop[1][1] - crop[1][0])
+        if cropped_img_size[0] != cropped_img_size[1]:
+            raise IndexError("The given crop limits have to create a quadratic image!")
+
+        cell_size = metadata["cell_size"] if fov is None else fov / cropped_img_size[0]
+
         header["CDELT1"] = (
-            np.abs(header["CDELT1"]) if ra_incr_right else -np.abs(header["CDELT1"])
+            np.abs(cell_size / 3600) if ra_incr_right else -np.abs(cell_size / 3600)
         )
+        header["CDELT2"] = cell_size / 3600
+
         header["BUNIT"] = flux_unit
 
         if source_name is not None:
@@ -338,19 +370,6 @@ class Fiducial:
             fiducial = dbscan_clean(fiducial, **dbscan_args)
         elif remove_negatives:
             fiducial[fiducial < 0] = 0
-
-        img_size = metadata["img_size"]
-        cell_size = metadata["cell_size"]
-
-        crop_max = np.array([[0, img_size], [0, img_size]])
-        crop = np.array(crop)
-
-        for i in range(2):
-            for j in range(2):
-                crop[i, j] = crop[i, j] if crop[i, j] is not None else crop_max[i, j]
-
-        if crop[0][1] - crop[0][0] != crop[1][1] - crop[1][0]:
-            raise IndexError("The given crop limits have to create a quadratic image!")
 
         fiducial = fiducial[crop[1][0] : crop[1][1], crop[0][0] : crop[0][1]]
         center_pixels = ((crop[0][0] + crop[0][1]) // 2, (crop[1][0] + crop[1][1]) // 2)

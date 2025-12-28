@@ -1,11 +1,14 @@
 import urllib
 import uuid
+from itertools import combinations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from astropy import units
 from astropy.coordinates import EarthLocation
+from astropy.coordinates.earth import GeodeticLocation
 from casacore.tables import table
 from numpy.typing import ArrayLike
 
@@ -15,37 +18,69 @@ pd.options.display.float_format = "{:f}".format
 class Layout:
     """
     A tool to convert radio telescope array layout config files between different types.
-
     """
 
-    def get_baselines(self):
-        """Returns an array containing the lengths of all
-        unique (!) baselines in meters.
+    def get_antenna_positions(self) -> EarthLocation:
+        return EarthLocation.from_geocentric(
+            x=self.x, y=self.y, z=self.z, unit=units.meter
+        )
+
+    def get_baselines(self) -> np.ndarray:
+        """Returns an array containing the lengths of
+        unique baselines in meters.
+
+        Returns
+        -------
+
+        numpy.ndarray: The lengths of the baselines.
         """
-        loc = np.array([self.x, self.y]).T
-        baselines = np.array([])
+        return np.linalg.norm(self.get_baseline_vecs(), ord=2, axis=1)
 
-        for i, vec1 in enumerate(loc):
-            for vec2 in loc[i + 1 :]:
-                baselines = np.append(
-                    baselines,
-                    np.linalg.norm(np.reshape(vec1 - vec2, (2, 1)), ord=2, axis=0),
-                )
+    def get_baseline_vecs(self, include_conjugates: bool = True) -> np.ndarrays:
+        """Returns an array containing the vectors of the baselines.
 
-        return baselines
+        Parameters
+        ----------
 
-    def get_baseline_vecs(self):
-        """Returns an array containing the vectors of all (!)
-        baselines (including conjugates).
+        include_conjugates: bool, optional
+            Whether to include the conjugate baselines. Default is ``True``.
+
+        Returns
+        -------
+
+        numpy.ndarray: The baseline vectors.
+
         """
-        loc = np.array([self.x, self.y]).T
-        baselines = np.array([])
+        loc = np.array([self.x, self.y, self.z]).T
 
-        for vec1 in loc:
-            for vec2 in loc:
-                baselines = np.append(baselines, np.reshape(vec1 - vec2, (2, 1)))
+        comb = list(combinations(np.arange(loc.shape[0]), 2))
+        baselines = np.diff(loc[comb], axis=1).reshape(-1, 3)
 
-        return np.reshape(baselines, (int(len(baselines) / 2), 2)).T
+        if include_conjugates:
+            return np.append(baselines, -baselines).reshape(-1, 3)
+        else:
+            return baselines
+
+    def get_station_combinations(self) -> GeodeticLocation:
+        """Returns a list of combinations of antenna positions
+        in geodetic coordinates. This can be used to construct
+        and plot the baseline connection vectors.
+
+        Returns
+        -------
+
+        astropy.coordinates.earth.GeodeticLocation:
+            A list combinations of the geodetic coordinates of the antennas.
+
+        """
+
+        loc = np.array([self.x, self.y, self.z]).T
+        comb = list(combinations(np.arange(loc.shape[0]), 2))
+        connection_vecs = EarthLocation.from_geocentric(
+            *loc[comb].T, unit=units.meter
+        ).to_geodetic()
+
+        return connection_vecs
 
     def get_max_resolution(self, frequency):
         """
@@ -114,17 +149,26 @@ class Layout:
 
         return output
 
-    def display(self):
+    def display(self) -> None:
         """
         Prints all information contained in the layout
-
         """
         print(self.__str__())
 
-    def is_relative(self):
+    def is_relative(self) -> bool:
+        """
+        Whether the current positions are relative to a specific
+        site.
+
+        Returns
+        -------
+
+        bool: Whether the layout is relative.
+
+        """
         return not (self.rel_to_site is None or self.rel_to_site == "")
 
-    def as_relative(self, rel_to_site):
+    def as_relative(self, rel_to_site) -> "Layout":
         """Returns a copy of the current layout in
         relative coordinates.
 
@@ -189,7 +233,6 @@ class Layout:
         ref_frequency=None,
         plot_args=None,
         save_args=None,
-        show_zeros=False,
     ):
         """Plots the uv-sampling (uv-plane) of the array.
 
@@ -208,18 +251,14 @@ class Layout:
         if save_args is None:
             save_args = {}
 
-        baselines = self.get_baseline_vecs()
-
-        if not show_zeros:
-            nonzero_bl = np.linalg.norm(baselines, axis=0) != 0
-            baselines = baselines[:, nonzero_bl]
+        baselines = self.get_baseline_vecs()[:, :2]
 
         fig, ax = plt.subplots(1, 1, layout="constrained")
 
         if ref_frequency is not None:
             baselines /= 3e8 / ref_frequency
 
-        ax.scatter(baselines[0], baselines[1], **plot_args)
+        ax.scatter(baselines[:, 0], baselines[:, 1], **plot_args)
         ax.set_xlabel("$u$ in m" if ref_frequency is None else "$u/\\lambda$")
         ax.set_ylabel("$v$ in m" if ref_frequency is None else "$v/\\lambda$")
 
