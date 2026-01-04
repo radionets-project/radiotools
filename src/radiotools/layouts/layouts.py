@@ -36,7 +36,7 @@ class Layout:
         """
         return np.linalg.norm(self.get_baseline_vecs(), ord=2, axis=1)
 
-    def get_baseline_vecs(self, include_conjugates: bool = True) -> np.ndarrays:
+    def get_baseline_vecs(self, include_conjugates: bool = True) -> np.ndarray:
         """Returns an array containing the vectors of the baselines.
 
         Parameters
