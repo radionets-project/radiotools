@@ -61,7 +61,9 @@ class Layout:
         else:
             return baselines
 
-    def get_station_combinations(self) -> GeodeticLocation:
+    def get_station_combinations(
+        self, geodetic: bool = True
+    ) -> GeodeticLocation | EarthLocation:
         """Returns a list of combinations of antenna positions
         in geodetic coordinates. This can be used to construct
         and plot the baseline connection vectors.
@@ -69,18 +71,18 @@ class Layout:
         Returns
         -------
 
-        astropy.coordinates.earth.GeodeticLocation:
-            A list combinations of the geodetic coordinates of the antennas.
+        astropy.coordinates.earth.GeodeticLocation |
+        astropy.coordinates.earth.EarthLocation:
+            A list combinations of the geodetic or geocentric
+            coordinates of the antennas.
 
         """
 
         loc = np.array([self.x, self.y, self.z]).T
         comb = list(combinations(np.arange(loc.shape[0]), 2))
-        connection_vecs = EarthLocation.from_geocentric(
-            *loc[comb].T, unit=units.meter
-        ).to_geodetic()
+        connection_vecs = EarthLocation.from_geocentric(*loc[comb].T, unit=units.meter)
 
-        return connection_vecs
+        return connection_vecs.to_geodetic() if geodetic else connection_vecs
 
     def get_max_resolution(self, frequency):
         """
