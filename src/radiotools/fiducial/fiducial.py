@@ -3,17 +3,43 @@ from pathlib import Path
 
 import astropy.units as units
 import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.constants import c
 from astropy.io import fits
 from astropy.io.fits import PrimaryHDU
 from matplotlib.patches import Ellipse
-from matplotlib.ticker import ScalarFormatter
+from matplotlib.ticker import NullFormatter, ScalarFormatter
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from radio_stats.cuts.dbscan_clean import dbscan_clean
 from radio_stats.cuts.dyn_range import rms_cut
 
 from radiotools.utils import beam2pix, pix2beam
+
+
+# based on https://stackoverflow.com/a/18195921 by "bogatron"
+def _configure_colorbar(
+    mappable: mpl.cm.ScalarMappable,
+    ax: mpl.axes.Axes,
+    fig: mpl.figure.Figure,
+    label: str | None,
+    show_ticks: bool = True,
+    fontsize: str = "medium",
+) -> mpl.colorbar.Colorbar:
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    cbar = fig.colorbar(mappable, cax=cax)
+    cbar.set_label(label, fontsize=fontsize)
+
+    if not show_ticks:
+        cbar.set_ticks([])
+        cbar.ax.yaxis.set_major_formatter(NullFormatter())
+        cbar.ax.yaxis.set_minor_formatter(NullFormatter())
+    else:
+        cbar.ax.tick_params(labelsize=fontsize)
+
+    return cbar
 
 
 class Fiducial:
@@ -399,7 +425,6 @@ class Fiducial:
         flux_unit: str | None = None,
         display_title: bool = True,
         norm: str | matplotlib.colors.Normalize | None = None,
-        colorbar_shrink: float = 1,
         cmap: str | matplotlib.colors.Colormap | None = "inferno",
         plot_args: dict = None,
         fig_args: dict = None,
@@ -469,10 +494,6 @@ class Fiducial:
                                 matplotlib itself.
 
             Default is ``None``, meaning no norm will be applied.
-        colorbar_shrink: float, optional
-            The shrink parameter of the colorbar. This can be needed if the plot is
-            included as a subplot to adjust the size of the colorbar.
-            Default is ``1``, meaning original scale.
         cmap: str | matplotlib.colors.Colormap, optional
             The colormap to be used for the plot.
             Default is ``'inferno'``.
@@ -615,11 +636,8 @@ class Fiducial:
                 ),
             )
 
-        fig.colorbar(
-            im,
-            ax=ax,
-            shrink=colorbar_shrink,
-            label=f"Flux Density / {flux_unit}",
+        _configure_colorbar(
+            mappable=im, ax=ax, fig=fig, label=f"Flux Density / {flux_unit}"
         )
 
         if display_title:

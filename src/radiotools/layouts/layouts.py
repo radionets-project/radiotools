@@ -68,6 +68,15 @@ class Layout:
         in geodetic coordinates. This can be used to construct
         and plot the baseline connection vectors.
 
+        Parameters
+        ----------
+
+        geodetic : bool, optional
+            Whether to return the values as geodetic coordinates.
+            If set to ``False``, geocentric coordinates will be
+            returned.
+            Default is ``True``.
+
         Returns
         -------
 
