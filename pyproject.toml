@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "radiotools"
+name = "radionets-radiotools"
 description = "Tools for radio astronomy."
 readme = "README.rst"
 
