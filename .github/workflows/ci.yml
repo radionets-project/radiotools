@@ -57,6 +57,7 @@ jobs:
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
+          sudo apt update --yes && sudo apt install --yes curl
           python --version
           pip install --upgrade pip
           pip install --group tests -e .[casa]

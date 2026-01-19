@@ -1,8 +1,25 @@
 from radiotools.fiducial import Fiducial
 import numpy as np
 from pathlib import Path
+import subprocess
 
 from astropy.io.fits import PrimaryHDU, Header
+
+FITS_URL = "http://www.cv.nrao.edu/2cmVLBA/data/2200+420/2025_11_23/2200+420.u.2025_11_23.icn.fits.gz"
+FITS_PATH = "./tests/data/"
+
+def download_fits() -> Path:
+    fits_path = Path(FITS_PATH) / FITS_URL.split("/")[-1]
+
+    fits_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if fits_path.exists():
+        return fits_path
+
+    subprocess.run([f"curl {FITS_URL} > {fits_path}"])
+    subprocess.run([f"gzip -d {fits_path}"])
+    return fits_path
+
 
 class TestFiducial:
     def test_fiducial(self):
@@ -31,8 +48,8 @@ class TestFiducial:
             "bpa",
         }
 
-
-        fiducial = Fiducial("./tests/data/2200+420.j.2006_04_05.i_0.1.fits")
+        path = download_fits()
+        fiducial = Fiducial(fits_path=path)
 
         hdu = fiducial.get_hdu()
         assert isinstance(hdu, PrimaryHDU)
@@ -73,7 +90,9 @@ class TestFiducial:
 
 
     def test_plot(self):
-        fiducial = Fiducial("./tests/data/2200+420.j.2006_04_05.i_0.1.fits")
+        path = download_fits()
+        fiducial = Fiducial(fits_path=path)
+
         fiducial.plot()
         fiducial.plot(display_beam=False)
         fiducial.plot(ax_unit="arcsec")
