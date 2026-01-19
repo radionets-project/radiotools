@@ -258,7 +258,6 @@ class Fiducial:
         self,
         clean: bool,
         remove_negatives: bool = True,
-        ra_incr_right: bool = True,
         crop: tuple[list[float | None]] = ([None, None], [None, None]),
         rms_cut_args: dict | None = None,
         dbscan_args: dict | None = None,
@@ -356,15 +355,15 @@ class Fiducial:
 
         hdu = self.get_hdu()
 
+        header = self.get_header(hdu=hdu)
+        metadata = self.get_metadata(hdu=hdu)
+
         fiducial = self.get_image(
-            ra_incr_right=ra_incr_right,
+            ra_incr_right=header["CDELT1"] > 0,
             flux_unit=flux_unit,
             hdu=hdu,
             allow_unit_prefixes=False,
         )
-
-        header = self.get_header(hdu=hdu)
-        metadata = self.get_metadata(hdu=hdu)
 
         img_size = metadata["img_size"]
 
@@ -381,9 +380,9 @@ class Fiducial:
 
         cell_size = metadata["cell_size"] if fov is None else fov / cropped_img_size[0]
 
-        header["CDELT1"] = (
-            np.abs(cell_size / 3600) if ra_incr_right else -np.abs(cell_size / 3600)
-        )
+        header["BPA"] = metadata["beam"]["bpa"]
+
+        header["CDELT1"] = np.sign(header["CDELT1"]) * np.abs(cell_size / 3600)
         header["CDELT2"] = cell_size / 3600
 
         header["BUNIT"] = flux_unit
@@ -441,10 +440,12 @@ class Fiducial:
             Whether to display size and orientation of the beam as
             a white ellipse in the lower left of the image.
             Default is ``True``.
+
         ra_incr_right : bool, optional
             Whether the Right Ascension coordinate (x-axis) should
             increase to the right.
             Default is ``True``.
+
         ax_unit : str | astropy.units.Unit, optional
             The unit in which to show the ticks of the x and y-axes in.
             The y-axis is the Declination (DEC) and the x-axis is the
@@ -455,10 +456,12 @@ class Fiducial:
 
             Valid units are either ``pixel`` or angle units like ``arcsec``, ``degree``
             etc.. Default is ``pixel``.
+
         use_relative_ax : bool, optional
             Whether to display the coordinate relative to the center of the image
             (not the source position).
             Default is ``True``.
+
         flux_unit : str | None, optional
             The flux density unit the image is supposed to have.
             Valid values are: ``'Jy/pix'``, ``"Jy/beam"`` or ``None``.
@@ -466,9 +469,11 @@ class Fiducial:
             ``'m'`` for milli etc..
             If set to ``None``, the unit from the FITS file will be used.
             Default is ``None``.
+
         display_title: bool, optional
             Whether to display the name of the source as the title of the plot.
             Default is ``True``.
+
         norm: str | matplotlib.colors.Normalize | None, optional
             The name of the norm or the norm itself.
             Possible values are:
@@ -494,27 +499,34 @@ class Fiducial:
                                 matplotlib itself.
 
             Default is ``None``, meaning no norm will be applied.
+
         cmap: str | matplotlib.colors.Colormap, optional
             The colormap to be used for the plot.
             Default is ``'inferno'``.
+
         plot_args : dict, optional
             The additional arguments passed to the scatter plot.
             Default is ``{"color":"royalblue"}``.
+
         fig_args : dict, optional
             The additional arguments passed to the figure.
             If a figure object is given in the ``fig`` parameter, this
             value will be discarded.
             Default is ``{}``.
+
         save_to : str | None, optional
             The name of the file to save the plot to.
             Default is ``None``, meaning the plot won't be saved.
+
         save_args : dict, optional
             The additional arguments passed to the ``fig.savefig`` call.
             Default is ``{"bbox_inches":"tight"}``.
+
         fig : matplotlib.figure.Figure | None, optional
             A custom figure object.
             If set to ``None``, the ``ax`` parameter also has to be ``None``!
             Default is ``None``.
+
         ax : matplotlib.axes.Axes | None, optional
             A custom axes object.
             If set to ``None``, the ``fig`` parameter also has to be ``None``!
@@ -524,6 +536,7 @@ class Fiducial:
         -------
         fig : matplotlib.figure.Figure
             The figure object.
+
         ax : matplotlib.axes.Axes
             The axes object.
         """
@@ -609,7 +622,7 @@ class Fiducial:
 
             bmin = beam_info["bmin"] * units.arcsecond
             bmaj = beam_info["bmaj"] * units.arcsecond
-            bpa = beam_info["bpa"]
+            bpa = beam_info["bpa"] * -1
 
             position = np.array([img_size * 0.1] * 2)
 

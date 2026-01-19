@@ -12,5 +12,3 @@ dependencies:
   - requests
   - bs4
   - towncrier
-  - pip:
-    - casatools ~=6.6
