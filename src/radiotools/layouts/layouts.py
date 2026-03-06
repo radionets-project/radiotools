@@ -1,6 +1,8 @@
 import urllib
 import uuid
+import warnings
 from itertools import combinations
+from os import PathLike
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -9,6 +11,7 @@ import pandas as pd
 from astropy import units
 from astropy.coordinates import EarthLocation
 from astropy.coordinates.earth import GeodeticLocation
+from astropy.io import fits
 from casacore.tables import table
 from numpy.typing import ArrayLike
 
@@ -605,32 +608,130 @@ class Layout:
     @classmethod
     def from_measurement_set(
         cls,
-        root_path: str,
-        sefd: int | ArrayLike,
-        altitude: int | ArrayLike,
+        root_path: str | PathLike,
+        sefd: float | ArrayLike,
+        el_low: float | ArrayLike = 0.0,
+        el_high: float | ArrayLike = 90.0,
         rel_to_site: str | None = None,
     ):
-        antennas = table(root_path + "/ANTENNA/", ack=False)
+        root_path = Path(root_path)
+        antennas = table(str(root_path / "ANTENNA"), ack=False)
 
         positions = antennas.getcol("POSITION")
         stations = antennas.getcol("STATION")
         dish_diameters = antennas.getcol("DISH_DIAMETER")
 
+        altitudes = EarthLocation.from_geocentric(
+            x=positions[:, 0], y=positions[:, 1], z=positions[:, 2], unit="m"
+        ).height.value
+
+        el_low = (
+            np.ones_like(stations, dtype=np.float64) * el_low
+            if np.isscalar(el_low)
+            else el_low
+        )
+
+        el_low = (
+            np.ones_like(stations, dtype=np.float64) * el_high
+            if np.isscalar(el_high)
+            else el_high
+        )
+
+        sefd = (
+            np.ones_like(stations, dtype=np.float64) * sefd
+            if np.isscalar(sefd)
+            else np.asarray(sefd)
+        )
+
         df = pd.DataFrame(
             data={
                 "station_name": stations,
-                "x": positions[0],
-                "y": positions[1],
-                "z": positions[2],
+                "x": positions[:, 0],
+                "y": positions[:, 1],
+                "z": positions[:, 2],
                 "dish_dia": dish_diameters,
-                "el_low": 2,
-                "el_high": 90,
-                "sefd": np.ones_like(stations, dtype=np.uint64()) * sefd
-                if np.isscalar(sefd)
-                else np.asarray(sefd),
-                "altitude": np.ones_like(stations, dtype=np.uint64()) * altitude
-                if np.isscalar(altitude)
-                else np.asarray(altitude),
+                "el_low": el_low,
+                "el_high": el_high,
+                "sefd": sefd,
+                "altitude": altitudes,
+            }
+        )
+
+        return Layout.from_dataframe(df=df, rel_to_site=rel_to_site)
+
+    @classmethod
+    def from_uv_fits(
+        cls,
+        path: str | PathLike,
+        sefd: float | ArrayLike,
+        el_low: float | ArrayLike = 0.0,
+        el_high: float | ArrayLike = 90.0,
+        dish_dia: ArrayLike | None = None,
+        rel_to_site: str | None = None,
+    ):
+        antennas = fits.open(path)[2].data
+
+        read_dish_dia = dish_dia is None
+
+        stations = []
+        xyz = []
+        if read_dish_dia:
+            dish_dia = []
+        altitudes = []
+
+        for i in range(len(antennas)):
+            antenna = antennas[i]
+            if isinstance(antenna["ANNAME"], bytes):
+                stations.append(antenna["ANNAME"].decode().strip())
+            else:
+                stations.append(antenna["ANNAME"].strip())
+            xyz.append(np.array(antenna["STABXYZ"], dtype=np.float64))
+            if read_dish_dia:
+                dish_dia.append(np.float64(antenna["DIAMETER"]))
+
+        if np.any(dish_dia == 0):
+            warnings.warn(
+                "There are zero values present in the dish diameter column. "
+                "This could indicate that the diameter is not saved in the FITS file. "
+                "Consider setting them by hand.",
+                stacklevel=0,
+            )
+
+        positions = np.array(xyz)
+
+        altitudes = EarthLocation.from_geocentric(
+            x=positions[:, 0], y=positions[:, 1], z=positions[:, 2], unit="m"
+        ).height.value
+
+        el_low = (
+            np.ones_like(stations, dtype=np.float64) * el_low
+            if np.isscalar(el_low)
+            else el_low
+        )
+
+        el_low = (
+            np.ones_like(stations, dtype=np.float64) * el_high
+            if np.isscalar(el_high)
+            else el_high
+        )
+
+        sefd = (
+            np.ones_like(stations, dtype=np.float64) * sefd
+            if np.isscalar(sefd)
+            else np.asarray(sefd)
+        )
+
+        df = pd.DataFrame(
+            data={
+                "station_name": stations,
+                "x": positions[:, 0],
+                "y": positions[:, 1],
+                "z": positions[:, 2],
+                "dish_dia": dish_dia,
+                "el_low": el_low,
+                "el_high": el_high,
+                "sefd": sefd,
+                "altitude": altitudes,
             }
         )
 
