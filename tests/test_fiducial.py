@@ -18,7 +18,7 @@ def download_fits() -> Path:
 
     subprocess.run([f"curl {FITS_URL} > {fits_path}"], shell=True)
     subprocess.run([f"gzip -d {fits_path}"], shell=True)
-    fits_path.with_suffix("")
+    fits_path = fits_path.with_suffix("")
     return fits_path
 
 
