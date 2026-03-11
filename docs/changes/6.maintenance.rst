@@ -1,2 +1,0 @@
-- Add simple tests for ``radiotools.visibility.SourceVisibility`` class and ``radiotools.layouts.Layout`` class
-- Add CI for tests
