@@ -2545,6 +2545,11 @@ wheels = [
 ]
 
 [[package]]
+name = "radio-stats"
+version = "0.1.dev96+ga4386a1f2"
+source = { git = "https://github.com/radionets-project/radio_stats#a4386a1f26c294b1c00e03b14d32342936a6be4d" }
+
+[[package]]
 name = "radiotools"
 source = { editable = "." }
 dependencies = [
@@ -2555,6 +2560,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "python-casacore" },
+    { name = "radio-stats" },
     { name = "requests" },
     { name = "rich" },
     { name = "toml" },
@@ -2633,6 +2639,7 @@ requires-dist = [
     { name = "numpy", specifier = "~=1.16" },
     { name = "pandas", specifier = ">=2.0" },
     { name = "python-casacore", specifier = ">=3.7.1" },
+    { name = "radio-stats", git = "https://github.com/radionets-project/radio_stats" },
     { name = "requests" },
     { name = "rich", specifier = ">=13.0" },
     { name = "toml", specifier = ">=0.10.2" },
