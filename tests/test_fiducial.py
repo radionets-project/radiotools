@@ -16,8 +16,8 @@ def download_fits() -> Path:
     if fits_path.exists():
         return fits_path
 
-    subprocess.run([f"curl {FITS_URL} > {fits_path}"])
-    subprocess.run([f"gzip -d {fits_path}"])
+    subprocess.run([f"curl {FITS_URL} > {fits_path}"], shell=True)
+    subprocess.run([f"gzip -d {fits_path}"], shell=True)
     return fits_path
 
 
