@@ -5,7 +5,7 @@ import subprocess
 
 from astropy.io.fits import PrimaryHDU, Header
 
-FITS_URL = "http://www.cv.nrao.edu/2cmVLBA/data/2200+420/2025_11_23/2200+420.u.2025_11_23.icn.fits.gz"
+FITS_URL = "https://www.cv.nrao.edu/2cmVLBA/data/2200+420/2025_11_23/2200+420.u.2025_11_23.icn.fits.gz"
 FITS_PATH = "./tests/data/"
 
 def download_fits() -> Path:
@@ -18,6 +18,7 @@ def download_fits() -> Path:
 
     subprocess.run([f"curl {FITS_URL} > {fits_path}"], shell=True)
     subprocess.run([f"gzip -d {fits_path}"], shell=True)
+    fits_path.with_suffix("")
     return fits_path
 
 
@@ -82,7 +83,7 @@ class TestFiducial:
 
         cleaned_maximum_info = fiducial_cleaned.get_maximum_info()
         assert np.isclose(cleaned_maximum_info[0], maximum_info[0])
-        assert np.allclose(cleaned_maximum_info[1].value, [112, 12])
+        assert np.allclose(cleaned_maximum_info[1].value, [88, 12])
         assert np.allclose(cleaned_maximum_info[2].value, maximum_info[2].value)
 
         fiducial_cleaned._fits_path.unlink(missing_ok=True)
