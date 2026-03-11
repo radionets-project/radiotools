@@ -12,9 +12,9 @@ from astropy.io.fits import PrimaryHDU
 from matplotlib.patches import Ellipse
 from matplotlib.ticker import NullFormatter, ScalarFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from radio_stats.cuts.dbscan_clean import dbscan_clean
-from radio_stats.cuts.dyn_range import rms_cut
 
+from radiotools.cuts.dbscan_clean import dbscan_clean
+from radiotools.cuts.rms_cut import rms_cut
 from radiotools.utils import beam2pix, pix2beam
 
 

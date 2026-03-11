@@ -13,6 +13,7 @@ authors = [{ name = "radionets developers" }]
 maintainers = [
   { name = "Anno Knierim", email = "anno.knierim@tu-dortmund.de" },
   { name = "Tom Groß", email = "tom.gross@tu-dortmund.de" },
+  { name = "Christian Arauner", email = "christian.arauner@tu-dortmund.de" },
 ]
 
 license = { text = "MIT" }
@@ -40,7 +41,7 @@ dependencies = [
   "bs4",
   "toml>=0.10.2",
   "python-casacore>=3.7.1",
-  "radio_stats@git+https://github.com/radionets-project/radio_stats",
+  "scikit-learn",
 ]
 
 [dependency-groups]
