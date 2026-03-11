@@ -29,5 +29,6 @@ Installation
 
 We recommend using a conda/mamba environment with python version ``>=3.11`` and ``<3.13``.
 
-If you want to use features from the NRAO `CASAtools <https://pypi.org/project/casatools/>`_ package,
-make sure you are using python 3.10 or 3.11.
+Acknowledgment
+===============
+This research has made use of data from the MOJAVE database that is maintained by the MOJAVE team `(Lister et al. 2018) <http://doi.org/10.3847/1538-4365/aa9c44>`_.

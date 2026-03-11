@@ -57,6 +57,7 @@ jobs:
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
+          sudo apt update --yes && sudo apt install --yes curl
           python --version
           pip install --upgrade pip
           pip install --group tests -e .[casa]
@@ -66,10 +67,6 @@ jobs:
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
         run: micromamba list
-
-      - name: Create CASA data directory
-        run: |
-          mkdir -p $HOME/.casa/data
 
       - name: Tests
         run: |
@@ -101,12 +98,8 @@ jobs:
       - name: Install doc dependencies
         run: |
           sudo apt update --yes && sudo apt install --yes git
-          uv sync --locked --group docs
+          uv sync --group docs
           git describe --tags
-
-      - name: Create CASA data directory
-        run: |
-          mkdir -p $HOME/.casa/data
 
       - name: Build docs
         run: |

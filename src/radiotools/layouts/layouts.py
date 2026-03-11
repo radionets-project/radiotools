@@ -1,11 +1,17 @@
 import urllib
 import uuid
+import warnings
+from itertools import combinations
+from os import PathLike
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from astropy import units
 from astropy.coordinates import EarthLocation
+from astropy.coordinates.earth import GeodeticLocation
+from astropy.io import fits
 from casacore.tables import table
 from numpy.typing import ArrayLike
 
@@ -15,37 +21,80 @@ pd.options.display.float_format = "{:f}".format
 class Layout:
     """
     A tool to convert radio telescope array layout config files between different types.
-
     """
 
-    def get_baselines(self):
-        """Returns an array containing the lengths of all
-        unique (!) baselines in meters.
+    def get_antenna_positions(self) -> EarthLocation:
+        return EarthLocation.from_geocentric(
+            x=self.x, y=self.y, z=self.z, unit=units.meter
+        )
+
+    def get_baselines(self) -> np.ndarray:
+        """Returns an array containing the lengths of
+        unique baselines in meters.
+
+        Returns
+        -------
+
+        numpy.ndarray: The lengths of the baselines.
         """
-        loc = np.array([self.x, self.y]).T
-        baselines = np.array([])
+        return np.linalg.norm(self.get_baseline_vecs(), ord=2, axis=1)
 
-        for i, vec1 in enumerate(loc):
-            for vec2 in loc[i + 1 :]:
-                baselines = np.append(
-                    baselines,
-                    np.linalg.norm(np.reshape(vec1 - vec2, (2, 1)), ord=2, axis=0),
-                )
+    def get_baseline_vecs(self, include_conjugates: bool = True) -> np.ndarray:
+        """Returns an array containing the vectors of the baselines.
 
-        return baselines
+        Parameters
+        ----------
 
-    def get_baseline_vecs(self):
-        """Returns an array containing the vectors of all (!)
-        baselines (including conjugates).
+        include_conjugates: bool, optional
+            Whether to include the conjugate baselines. Default is ``True``.
+
+        Returns
+        -------
+
+        numpy.ndarray: The baseline vectors.
+
         """
-        loc = np.array([self.x, self.y]).T
-        baselines = np.array([])
+        loc = np.array([self.x, self.y, self.z]).T
 
-        for vec1 in loc:
-            for vec2 in loc:
-                baselines = np.append(baselines, np.reshape(vec1 - vec2, (2, 1)))
+        comb = list(combinations(np.arange(loc.shape[0]), 2))
+        baselines = np.diff(loc[comb], axis=1).reshape(-1, 3)
 
-        return np.reshape(baselines, (int(len(baselines) / 2), 2)).T
+        if include_conjugates:
+            return np.append(baselines, -baselines).reshape(-1, 3)
+        else:
+            return baselines
+
+    def get_station_combinations(
+        self, geodetic: bool = True
+    ) -> GeodeticLocation | EarthLocation:
+        """Returns a list of combinations of antenna positions
+        in geodetic coordinates. This can be used to construct
+        and plot the baseline connection vectors.
+
+        Parameters
+        ----------
+
+        geodetic : bool, optional
+            Whether to return the values as geodetic coordinates.
+            If set to ``False``, geocentric coordinates will be
+            returned.
+            Default is ``True``.
+
+        Returns
+        -------
+
+        astropy.coordinates.earth.GeodeticLocation |
+        astropy.coordinates.earth.EarthLocation:
+            A list combinations of the geodetic or geocentric
+            coordinates of the antennas.
+
+        """
+
+        loc = np.array([self.x, self.y, self.z]).T
+        comb = list(combinations(np.arange(loc.shape[0]), 2))
+        connection_vecs = EarthLocation.from_geocentric(*loc[comb].T, unit=units.meter)
+
+        return connection_vecs.to_geodetic() if geodetic else connection_vecs
 
     def get_max_resolution(self, frequency):
         """
@@ -114,17 +163,26 @@ class Layout:
 
         return output
 
-    def display(self):
+    def display(self) -> None:
         """
         Prints all information contained in the layout
-
         """
         print(self.__str__())
 
-    def is_relative(self):
+    def is_relative(self) -> bool:
+        """
+        Whether the current positions are relative to a specific
+        site.
+
+        Returns
+        -------
+
+        bool: Whether the layout is relative.
+
+        """
         return not (self.rel_to_site is None or self.rel_to_site == "")
 
-    def as_relative(self, rel_to_site):
+    def as_relative(self, rel_to_site) -> "Layout":
         """Returns a copy of the current layout in
         relative coordinates.
 
@@ -189,7 +247,6 @@ class Layout:
         ref_frequency=None,
         plot_args=None,
         save_args=None,
-        show_zeros=False,
     ):
         """Plots the uv-sampling (uv-plane) of the array.
 
@@ -208,18 +265,14 @@ class Layout:
         if save_args is None:
             save_args = {}
 
-        baselines = self.get_baseline_vecs()
-
-        if not show_zeros:
-            nonzero_bl = np.linalg.norm(baselines, axis=0) != 0
-            baselines = baselines[:, nonzero_bl]
+        baselines = self.get_baseline_vecs()[:, :2]
 
         fig, ax = plt.subplots(1, 1, layout="constrained")
 
         if ref_frequency is not None:
             baselines /= 3e8 / ref_frequency
 
-        ax.scatter(baselines[0], baselines[1], **plot_args)
+        ax.scatter(baselines[:, 0], baselines[:, 1], **plot_args)
         ax.set_xlabel("$u$ in m" if ref_frequency is None else "$u/\\lambda$")
         ax.set_ylabel("$v$ in m" if ref_frequency is None else "$v/\\lambda$")
 
@@ -555,32 +608,130 @@ class Layout:
     @classmethod
     def from_measurement_set(
         cls,
-        root_path: str,
-        sefd: int | ArrayLike,
-        altitude: int | ArrayLike,
+        root_path: str | PathLike,
+        sefd: float | ArrayLike,
+        el_low: float | ArrayLike = 0.0,
+        el_high: float | ArrayLike = 90.0,
         rel_to_site: str | None = None,
     ):
-        antennas = table(root_path + "/ANTENNA/", ack=False)
+        root_path = Path(root_path)
+        antennas = table(str(root_path / "ANTENNA"), ack=False)
 
         positions = antennas.getcol("POSITION")
         stations = antennas.getcol("STATION")
         dish_diameters = antennas.getcol("DISH_DIAMETER")
 
+        altitudes = EarthLocation.from_geocentric(
+            x=positions[:, 0], y=positions[:, 1], z=positions[:, 2], unit="m"
+        ).height.value
+
+        el_low = (
+            np.ones_like(stations, dtype=np.float64) * el_low
+            if np.isscalar(el_low)
+            else el_low
+        )
+
+        el_low = (
+            np.ones_like(stations, dtype=np.float64) * el_high
+            if np.isscalar(el_high)
+            else el_high
+        )
+
+        sefd = (
+            np.ones_like(stations, dtype=np.float64) * sefd
+            if np.isscalar(sefd)
+            else np.asarray(sefd)
+        )
+
         df = pd.DataFrame(
             data={
                 "station_name": stations,
-                "x": positions[0],
-                "y": positions[1],
-                "z": positions[2],
+                "x": positions[:, 0],
+                "y": positions[:, 1],
+                "z": positions[:, 2],
                 "dish_dia": dish_diameters,
-                "el_low": 2,
-                "el_high": 90,
-                "sefd": np.ones_like(stations, dtype=np.uint64()) * sefd
-                if np.isscalar(sefd)
-                else np.asarray(sefd),
-                "altitude": np.ones_like(stations, dtype=np.uint64()) * altitude
-                if np.isscalar(altitude)
-                else np.asarray(altitude),
+                "el_low": el_low,
+                "el_high": el_high,
+                "sefd": sefd,
+                "altitude": altitudes,
+            }
+        )
+
+        return Layout.from_dataframe(df=df, rel_to_site=rel_to_site)
+
+    @classmethod
+    def from_uv_fits(
+        cls,
+        path: str | PathLike,
+        sefd: float | ArrayLike,
+        el_low: float | ArrayLike = 0.0,
+        el_high: float | ArrayLike = 90.0,
+        dish_dia: ArrayLike | None = None,
+        rel_to_site: str | None = None,
+    ):
+        antennas = fits.open(path)[2].data
+
+        read_dish_dia = dish_dia is None
+
+        stations = []
+        xyz = []
+        if read_dish_dia:
+            dish_dia = []
+        altitudes = []
+
+        for i in range(len(antennas)):
+            antenna = antennas[i]
+            if isinstance(antenna["ANNAME"], bytes):
+                stations.append(antenna["ANNAME"].decode().strip())
+            else:
+                stations.append(antenna["ANNAME"].strip())
+            xyz.append(np.array(antenna["STABXYZ"], dtype=np.float64))
+            if read_dish_dia:
+                dish_dia.append(np.float64(antenna["DIAMETER"]))
+
+        if np.any(dish_dia == 0):
+            warnings.warn(
+                "There are zero values present in the dish diameter column. "
+                "This could indicate that the diameter is not saved in the FITS file. "
+                "Consider setting them by hand.",
+                stacklevel=0,
+            )
+
+        positions = np.array(xyz)
+
+        altitudes = EarthLocation.from_geocentric(
+            x=positions[:, 0], y=positions[:, 1], z=positions[:, 2], unit="m"
+        ).height.value
+
+        el_low = (
+            np.ones_like(stations, dtype=np.float64) * el_low
+            if np.isscalar(el_low)
+            else el_low
+        )
+
+        el_low = (
+            np.ones_like(stations, dtype=np.float64) * el_high
+            if np.isscalar(el_high)
+            else el_high
+        )
+
+        sefd = (
+            np.ones_like(stations, dtype=np.float64) * sefd
+            if np.isscalar(sefd)
+            else np.asarray(sefd)
+        )
+
+        df = pd.DataFrame(
+            data={
+                "station_name": stations,
+                "x": positions[:, 0],
+                "y": positions[:, 1],
+                "z": positions[:, 2],
+                "dish_dia": dish_dia,
+                "el_low": el_low,
+                "el_high": el_high,
+                "sefd": sefd,
+                "altitude": altitudes,
             }
         )
 
