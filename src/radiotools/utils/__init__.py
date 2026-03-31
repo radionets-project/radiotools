@@ -1,8 +1,9 @@
-from .utils import get_array_names, img2jansky, rms, rmtree, uvfits2ms
+from .utils import beam2pix, get_array_names, pix2beam, rms, rmtree, uvfits2ms
 
 __all__ = [
     "get_array_names",
-    "img2jansky",
+    "beam2pix",
+    "pix2beam",
     "rms",
     "uvfits2ms",
     "rmtree",

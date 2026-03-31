@@ -1,3 +1,0 @@
-- Refactor code in ``pyvisgen.layouts.Layout`` ``from_pyvisgen`` and
-  ``from_casa`` class methods
-- Remove ``pyvisgen`` dependencies

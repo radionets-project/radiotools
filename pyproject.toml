@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "radiotools"
+name = "radionets-radiotools"
 description = "Tools for radio astronomy."
 readme = "README.rst"
 
@@ -13,6 +13,7 @@ authors = [{ name = "radionets developers" }]
 maintainers = [
   { name = "Anno Knierim", email = "anno.knierim@tu-dortmund.de" },
   { name = "Tom Groß", email = "tom.gross@tu-dortmund.de" },
+  { name = "Christian Arauner", email = "christian.arauner@tu-dortmund.de" },
 ]
 
 license = { text = "MIT" }
@@ -39,10 +40,10 @@ dependencies = [
   "requests",
   "bs4",
   "toml>=0.10.2",
+  "python-casacore>=3.7.1",
+  "scikit-learn",
+  "tqdm",
 ]
-
-[project.optional-dependencies]
-casa = ["casatools ~=6.6"]
 
 [dependency-groups]
 tests = [
@@ -99,6 +100,9 @@ version-file = "src/radiotools/_version.py"
 
 [tool.hatch.build.targets.wheel]
 include = ["src/radiotools"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel.sources]
 "src/radiotools" = "radiotools"

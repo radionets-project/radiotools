@@ -34,7 +34,7 @@ jobs:
         shell: bash -leo pipefail {0}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -57,6 +57,7 @@ jobs:
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
+          sudo apt update --yes && sudo apt install --yes curl
           python --version
           pip install --upgrade pip
           pip install --group tests -e .[casa]
@@ -66,10 +67,6 @@ jobs:
       - name: List installed package versions (conda)
         if: matrix.environment-type == 'mamba'
         run: micromamba list
-
-      - name: Create CASA data directory
-        run: |
-          mkdir -p $HOME/.casa/data
 
       - name: Tests
         run: |
@@ -89,24 +86,20 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.11"
 
       - name: Install doc dependencies
         run: |
           sudo apt update --yes && sudo apt install --yes git
-          uv sync --locked --extra casa --group docs
+          uv sync --group docs
           git describe --tags
-
-      - name: Create CASA data directory
-        run: |
-          mkdir -p $HOME/.casa/data
 
       - name: Build docs
         run: |
