@@ -1,4 +1,6 @@
 import re
+import subprocess
+from pathlib import Path
 
 import numpy as np
 import requests
@@ -74,8 +76,52 @@ def beam2pix(
     array_like
         Converted image in units of Jy/pix.
     """
-
     return image * (4 * np.log(2) * np.power(cell_size, 2) / (np.pi * bmin * bmaj))
+
+
+def uvfits2ms(fits_path, ms_path):
+    """Converts a uvfits_file into a measurement set (ms file).
+
+    Parameters
+    ----------
+        fits_path : str
+            path to fits_file
+        ms_path : str
+            path to store ms_file
+    """
+    casa = "casa --quiet --nologger --nologfile --nogui --norc --agg -c "
+    arg = (
+        "importuvfits(fitsfile='"
+        + str(fits_path)
+        + "'"
+        + ", vis="
+        + "'"
+        + str(ms_path)
+        + "'"
+        + ")"
+    )
+
+    command = casa + '"' + arg + '"'
+
+    subprocess.run(command, shell=True)
+
+
+def rmtree(root: Path):
+    """Recursively remove directories and files
+    starting from root directory.
+
+    Parameters
+    ----------
+    root : Path
+        Root path of the directories you want to delete.
+    """
+    for p in root.iterdir():
+        if p.is_dir():
+            rmtree(p)
+        else:
+            p.unlink()
+
+    root.rmdir()
 
 
 def pix2beam(
