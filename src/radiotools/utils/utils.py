@@ -89,7 +89,7 @@ def uvfits2ms(fits_path, ms_path):
         ms_path : str
             path to store ms_file
     """
-    casa = "casa --quiet --nologger --nologfile --nogui --norc --agg -c "
+    casa = "casa --quiet --nologger --nologfile --nogui --agg -c "
     arg = (
         "importuvfits(fitsfile='"
         + str(fits_path)
