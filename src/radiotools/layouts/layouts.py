@@ -34,8 +34,7 @@ class Layout:
 
         Returns
         -------
-
-        numpy.ndarray: The lengths of the baselines.
+        numpy.ndarray : The lengths of the baselines.
         """
         return np.linalg.norm(self.get_baseline_vecs(), ord=2, axis=1)
 
@@ -44,15 +43,12 @@ class Layout:
 
         Parameters
         ----------
-
-        include_conjugates: bool, optional
+        include_conjugates : bool, optional
             Whether to include the conjugate baselines. Default is ``True``.
 
         Returns
         -------
-
-        numpy.ndarray: The baseline vectors.
-
+        numpy.ndarray : The baseline vectors.
         """
         loc = np.array([self.x, self.y, self.z]).T
 
@@ -73,21 +69,17 @@ class Layout:
 
         Parameters
         ----------
-
         geodetic : bool, optional
             Whether to return the values as geodetic coordinates.
             If set to ``False``, geocentric coordinates will be
-            returned.
-            Default is ``True``.
+            returned. Default is ``True``.
 
         Returns
         -------
-
         astropy.coordinates.earth.GeodeticLocation |
-        astropy.coordinates.earth.EarthLocation:
+        astropy.coordinates.earth.EarthLocation :
             A list combinations of the geodetic or geocentric
             coordinates of the antennas.
-
         """
 
         loc = np.array([self.x, self.y, self.z]).T
@@ -105,7 +97,6 @@ class Layout:
         ----------
         frequency : float or array_like
             The frequency at which the array is observing
-
         """
         return 3600 * 180 / np.pi * 3 * 1e8 / (frequency * np.max(self.get_baselines()))
 
@@ -176,9 +167,8 @@ class Layout:
 
         Returns
         -------
-
-        bool: Whether the layout is relative.
-
+        bool
+            Whether the layout is relative.
         """
         return not (self.rel_to_site is None or self.rel_to_site == "")
 
@@ -523,7 +513,7 @@ class Layout:
 
         df = pd.read_csv(
             cfg_path,
-            delimiter="\s+",
+            delimiter=r"\s+",
             encoding="utf-8",
             skip_blank_lines=True,
             names=["x", "y", "z", "dish_dia", "station_name"],
@@ -563,7 +553,6 @@ class Layout:
         ----------
         cfg_path : str
             The path of the config file to import.
-
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored if `None` or empty.
@@ -573,7 +562,7 @@ class Layout:
 
         df = pd.read_csv(
             cfg_path,
-            delimiter="\s+",
+            delimiter=r"\s+",
             encoding="utf-8",
             skip_blank_lines=True,
             dtype={
@@ -745,7 +734,6 @@ class Layout:
         ----------
         df : pandas.DataFrame
             DateFrame containing the layout.
-
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored is `None` or empty or `fmt`. Has to be an
@@ -828,17 +816,17 @@ def loc2itrf(cx, cy, cz, locx=0.0, locy=0.0, locz=0.0):
 
     Parameters
     ----------
-    locx: array_like or float
+    locx : array_like or float
         The x-coordinate in relative coordinates
-    locy: array_like or float
+    locy : array_like or float
         The y-coordinate in relative coordinates
-    locz: array_like or float
+    locz : array_like or float
         The z-coordinate in relative coordinates
-    cx: float
+    cx : float
         The center's x-coordinate in WGS84 coordinates
-    cy: float
+    cy : float
         The center's y-coordinate in WGS84 coordinates
-    cz: float
+    cz : float
         The center's z-coordinate in WGS84 coordinates
     """
 
@@ -874,17 +862,17 @@ def itrf2loc(x, y, z, cx, cy, cz):
 
     Parameters
     ----------
-    x: array_like or float
+    x : array_like or float
         The x-coordinate in WGS84 coordinates
-    y: array_like or float
+    y : array_like or float
         The y-coordinate in WGS84 coordinates
-    z: array_like or float
+    z : array_like or float
         The z-coordinate in WGS84 coordinates
-    cx: float
+    cx : float
         The center's x-coordinate in WGS84 coordinates
-    cy: float
+    cy : float
         The center's y-coordinate in WGS84 coordinates
-    cz: float
+    cz : float
         The center's z-coordinate in WGS84 coordinates
     """
 
@@ -932,11 +920,11 @@ def geocentric2geodetic(x, y, z):
 
     Parameters
     ----------
-    x: array_like or float
+    x : array_like or float
         The x-coordinate in WGS84 coordinates
-    y: array_like or float
+    y : array_like or float
         The y-coordinate in WGS84 coordinates
-    z: array_like or float
+    z : array_like or float
         The z-coordinate in WGS84 coordinates
     """
 
@@ -962,11 +950,11 @@ def geodetic2geocentric(lon, lat, alt):
 
     Parameters
     ----------
-    lon: array_like or float
+    lon : array_like or float
         The longitude in geodetic coordinates
-    lat: array_like or float
+    lat : array_like or float
         The latitude in geodetic coordinates
-    alt: array_like or float
+    alt : array_like or float
         The altitude in geodetic coordinates
     """
 
