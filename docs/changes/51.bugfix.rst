@@ -1,3 +1,0 @@
-Added some minor fixes for delimiters in ``pd.read_csv``
-
-Fixed docstring format

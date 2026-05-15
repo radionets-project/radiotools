@@ -1,3 +1,44 @@
+Radiotools 0.4.0 (2026-05-15)
+=============================
+
+
+API Changes
+-----------
+
+
+Bug Fixes
+---------
+
+- Added some minor fixes for delimiters in ``pd.read_csv``
+
+  Fixed docstring format [`#51 <https://github.com/radionets-project/radiotools/pull/51>`__]
+
+
+New Features
+------------
+
+- added command line tool for uvfits to measurement set conversion using casa [`#30 <https://github.com/radionets-project/radiotools/pull/30>`__]
+
+- - Added the ``fiducial`` module to process and visualize cleaned radio images which are provided as FITS files.
+
+  - Switched CASA table import in ``src/radiotools/layouts/layouts.py`` from ``casatools.table`` to ``casacore.table``, and updated the `table` instantiation to include ``ack=False`` for compatibility with ``python-casacore``.
+
+  - Added ``python-casacore>=3.7.1`` to the main dependencies in `pyproject.toml`, and removed the optional CASA dependency group.
+
+  - Replaced the ``img2jansky`` function with two new functions, ``beam2pix`` and ``pix2beam``, for converting between Jy/beam and Jy/pix units in ``src/radiotools/utils/utils.py``. Updated the corresponding exports in ``src/radiotools/utils/__init__.py``.
+
+  - Removed the ``src/radiotools/measurements/measurements.py`` file and its corresponding import/export from ``src/radiotools/measurements/__init__.py``. [`#34 <https://github.com/radionets-project/radiotools/pull/34>`__]
+
+- - Add ``cuts`` module from ``radio_stats`` (https://github.com/radionets-project/radio_stats), Made by Christian Arauner [`#48 <https://github.com/radionets-project/radiotools/pull/48>`__]
+
+
+Maintenance
+-----------
+
+
+Refactoring and Optimization
+----------------------------
+
 Radiotools v0.3.0 (2026-03-11)
 ==============================
 
