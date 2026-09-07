@@ -55,7 +55,7 @@ def _info_version():
 
     print("\n*** radiotools version info ***\n")
     print(f"version: {radiotools.__version__}")
-    print("")
+    print()
 
 
 def _info_dependencies():
@@ -68,7 +68,7 @@ def _info_dependencies():
 
     for dep in deps:
         req = Requirement(dep)
-        print(f"{req.name:>20} -- {str(req.specifier)}")
+        print(f"{req.name:>20} -- {req.specifier!s}")
 
 
 def _info_tools():
@@ -77,7 +77,7 @@ def _info_tools():
     # https://github.com/cta-observatory/ctapipe/blob/main/src/ctapipe/tools/info.py
     print("\n*** radiotools cli-tools ***\n")
     print("The following can be executed by typing radiotools-<toolname>:")
-    print("")
+    print()
     tools = {
         ep.name: ep.value
         for ep in distribution("radiotools").entry_points
@@ -103,8 +103,8 @@ def _info_tools():
     for name, descr in sorted(description.items()):
         text = f"{name:<30s} -- {descr}"
         print(wrapper.fill(text))
-        print("")
-    print("")
+        print()
+    print()
 
 
 if __name__ == "__main__":

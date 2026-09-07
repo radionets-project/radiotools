@@ -1,11 +1,11 @@
 import warnings
 from pathlib import Path
 
-import astropy.units as units
 import matplotlib
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from astropy import units
 from astropy.constants import c
 from astropy.io import fits
 from astropy.io.fits import PrimaryHDU
