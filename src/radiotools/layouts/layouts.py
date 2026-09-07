@@ -431,7 +431,7 @@ class Layout:
                     "station_name X Y Z dish_dia el_low el_high SEFD altitude\n"
                 )
 
-                for i in range(0, len(self.x)):
+                for i in range(len(self.x)):
                     row = map(
                         str,
                         [
@@ -455,7 +455,7 @@ class Layout:
 
                 data.append("# X Y Z dish_dia station_name\n")
 
-                for i in range(0, len(self.x)):
+                for i in range(len(self.x)):
                     row = map(
                         str,
                         [
@@ -935,7 +935,7 @@ def geocentric2geodetic(x, y, z):
         alt = alt.value
     else:
         lon, lat, alt = np.array([]), np.array([]), np.array([])
-        for i in range(0, len(x)):
+        for i in range(len(x)):
             loc = EarthLocation.from_geocentric(x[i], y[i], z[i], "m")
             lon = np.append(lon, loc.lon.deg)
             lat = np.append(lat, loc.lon.deg)
@@ -967,7 +967,7 @@ def geodetic2geocentric(lon, lat, alt):
         z = z.value
     else:
         x, y, z = np.array([]), np.array([]), np.array([])
-        for i in range(0, len(lon)):
+        for i in range(len(lon)):
             loc = EarthLocation.from_geodetic(lon=lon[i], lat=lat[i], height=alt[i])
             x = np.append(x, loc.x.value)
             y = np.append(y, loc.y.value)
