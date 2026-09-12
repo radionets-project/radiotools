@@ -649,8 +649,16 @@ class Fiducial:
                 ),
             )
 
+        flux_unit_components = flux_unit.split("/")
+        flux_unit_full = units.Unit(flux_unit_components[0]) / units.Unit(
+            flux_unit_components[1]
+        )
+
         _configure_colorbar(
-            mappable=im, ax=ax, fig=fig, label=f"Flux Density / {flux_unit}"
+            mappable=im,
+            ax=ax,
+            fig=fig,
+            label=f"Flux Density / {flux_unit_full.to_string(format='latex_inline')}",
         )
 
         if display_title:
