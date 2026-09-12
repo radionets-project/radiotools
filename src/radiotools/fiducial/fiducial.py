@@ -299,10 +299,10 @@ class Fiducial:
 
         output_path : str | None, optional
             The path to save the cleaned model at. If ``None`` same directory
-            is used and name is appended a '_cleaned' suffix)
+            is used and name is appended a '_processed' suffix)
             Default is ``None``.
 
-        flux_unit : str, optional
+        flux_unit : str | None, optional
             The flux density unit in which the image should be saved.
             Available values are ``'Jy/beam'``, ``'Jy/pix'`` or ``None``.
             The unit may not contain unit prefixes!
@@ -385,7 +385,7 @@ class Fiducial:
         header["CDELT1"] = np.sign(header["CDELT1"]) * np.abs(cell_size / 3600)
         header["CDELT2"] = cell_size / 3600
 
-        header["BUNIT"] = flux_unit
+        header["BUNIT"] = flux_unit if flux_unit is not None else header["BUNIT"]
 
         if source_name is not None:
             header["OBJECT"] = source_name
@@ -583,8 +583,8 @@ class Fiducial:
                 extent[2:] += center_pos[1]
                 label_prefix = ""
 
-            ax.set_xlabel(f"{label_prefix}Right Ascension / {unit}")
-            ax.set_ylabel(f"{label_prefix}Declination / {unit}")
+            ax.set_xlabel(f"{label_prefix}RA / {unit}")
+            ax.set_ylabel(f"{label_prefix}DEC / {unit}")
 
             extent = extent.value
 
@@ -649,8 +649,16 @@ class Fiducial:
                 ),
             )
 
+        flux_unit_components = flux_unit.split("/")
+        flux_unit_full = units.Unit(flux_unit_components[0]) / units.Unit(
+            flux_unit_components[1]
+        )
+
         _configure_colorbar(
-            mappable=im, ax=ax, fig=fig, label=f"Flux Density / {flux_unit}"
+            mappable=im,
+            ax=ax,
+            fig=fig,
+            label=f"Flux Density / {flux_unit_full.to_string(format='latex_inline')}",
         )
 
         if display_title:
