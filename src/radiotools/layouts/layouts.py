@@ -6,7 +6,6 @@ from os import PathLike
 from pathlib import Path
 
 import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy import units
@@ -298,6 +297,13 @@ class Layout:
             A custom axes object.
             If set to ``None``, the ``fig`` parameter also has to be ``None``!
             Default is ``None``.
+
+        Returns
+        -------
+
+        tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]:
+            The figure and axes objects.
+
         """
         if plot_args is None:
             plot_args = {"color": "royalblue", "alpha": 0.5}
@@ -307,7 +313,7 @@ class Layout:
 
         baselines = self.get_baseline_vecs()[:, :2]
 
-        fig, ax = plt.subplots(1, 1, layout="constrained")
+        fig, ax = _configure_axes(fig=fig, ax=ax, fig_args=fig_args)
 
         ref_frequency = (
             ref_frequency * units.Hertz
@@ -316,7 +322,7 @@ class Layout:
         )
 
         if ref_frequency is not None:
-            baselines /= 3e8 / ref_frequency
+            baselines /= 3e8 / ref_frequency.value
 
         ax.scatter(baselines[:, 0], baselines[:, 1], **plot_args)
         ax.set_xlabel("$u$ in m" if ref_frequency is None else "$u/\\lambda$")
@@ -332,6 +338,7 @@ class Layout:
         show_names: bool = False,
         plot_args: dict | None = None,
         show_altitude: bool = True,
+        length_unit: units.Unit = units.kilometer,
         color: str = "#f54254",
         cmap: str = "cividis",
         save_to: PathLike | None = None,
@@ -358,6 +365,10 @@ class Layout:
             a color gradient. If all stations have the same altitude,
             a singular color will be used.
             Default is ``True``.
+
+        length_unit : units.Unit, optional
+            The length unit used for the x and y axes.
+            Default is meter.
 
         color : str, optional
             Color of the points in case the altitude is not
@@ -412,10 +423,17 @@ class Layout:
 
         fig, ax = _configure_axes(fig=fig, ax=ax, fig_args=fig_args)
 
-        im = ax.scatter(self.x, self.y, **options, **plot_args)
+        positions = self.get_antenna_positions()
+
+        im = ax.scatter(
+            positions.x.to(length_unit),
+            positions.y.to(length_unit),
+            **options,
+            **plot_args,
+        )
 
         if not singular_alt:
-            fig.colorbar(im, ax=ax, label="Altitude")
+            fig.colorbar(im, ax=ax, label="Altitude / m")
 
         if show_names:
             for _, row in self.get_dataframe().iterrows():
@@ -423,8 +441,14 @@ class Layout:
                     text=f"{row['station_name']}", xy=(row.x, row.y), fontsize=8
                 )
 
-        ax.set_xlabel(f"{'Relative' if self.is_relative() else 'Geocentric'} $x$ in m")
-        ax.set_ylabel(f"{'Relative' if self.is_relative() else 'Geocentric'} $y$ in m")
+        ax.set_xlabel(
+            f"{'Relative' if self.is_relative() else 'Geocentric'} $x$ in "
+            f"{length_unit.to_string(format='latex_inline')}"
+        )
+        ax.set_ylabel(
+            f"{'Relative' if self.is_relative() else 'Geocentric'} $y$ in "
+            f"{length_unit.to_string(format='latex_inline')}"
+        )
         ax.set_box_aspect(1)
 
         if save_to is not None:
@@ -586,10 +610,10 @@ class Layout:
     def from_casa(
         cls,
         cfg_path: PathLike,
-        el_low: float = 0.0,
-        el_high: float = 90.0,
+        el_low: float | ArrayLike = 0.0,
+        el_high: float | ArrayLike = 90.0,
         sefd: float = 0.0,
-        rel_to_site=None,
+        rel_to_site: str | None = None,
     ) -> "Layout":
         """
         Import a layout from a NRAO CASA layout config.
@@ -599,31 +623,30 @@ class Layout:
         cfg_path : PathLike
             The path of the config file to import.
 
-        el_low : float or array_like, optional
+        el_low : float | ArrayLike, optional
             The minimal elevation in degrees the telescope can be adjusted to.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+            Default is ``0.0``.
 
-        el_high : float or array_like, optional
+        el_high : float | ArrayLike, optional
             The maximal elevation in degrees the telescope can be adjusted to.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+            Default is ``90.0``.
 
-        sefd : float or array_like, optional
+        sefd : float | ArrayLike, optional
             The system equivalent flux density of the telescope.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+            Default is ``0.0``.
 
-        altitude : float or array_like, optional
-            The altitude of the telescope.
-            If provided as singular number all telescopes in the array will
-            be assigned the same value.
-
-        rel_to_site : str, optional
+        rel_to_site : str | None, optional
             The name of the site the coordinates are relative to.
             Is ignored if `None` or empty.
             Has to be an existing site for
             :func:`astropy.coordinates.EarthLocation.of_site()`.
+            Default is ``None``.
         """
 
         df = pd.read_csv(
@@ -659,21 +682,31 @@ class Layout:
         instance.altitude = (
             instance.get_antenna_positions().height.to(units.meter).value
         )
+        if rel_to_site is not None:
+            instance_abs = instance.as_absolute()
+            instance.altitude = (
+                instance_abs.get_antenna_positions().height.to(units.meter).value
+            )
         return instance
 
     @classmethod
-    def from_pyvisgen(cls, cfg_path, rel_to_site=None):
+    def from_pyvisgen(
+        cls, cfg_path: PathLike, rel_to_site: str | None = None
+    ) -> "Layout":
         """Import a layout from a radionets pyvisgen layout config.
 
         Parameters
         ----------
-        cfg_path : str
+
+        cfg_path : PathLike
             The path of the config file to import.
-        rel_to_site : str, optional
+
+        rel_to_site : str | None, optional
             The name of the site the coordinates are relative to.
             Is ignored if `None` or empty.
             Has to be an existing site for
             :func:`astropy.coordinates.EarthLocation.of_site()`.
+            Default is ``None``.
         """
 
         df = pd.read_csv(
@@ -718,7 +751,42 @@ class Layout:
         el_low: float | ArrayLike = 0.0,
         el_high: float | ArrayLike = 90.0,
         rel_to_site: str | None = None,
-    ):
+    ) -> "Layout":
+        """Import a layout from a CASA Measurement Set.
+
+        Parameters
+        ----------
+
+        root_path : PathLike
+            The path of the measurement set root directory.
+
+        sefd : float | ArrayLike, optional
+            The system equivalent flux density of the telescope.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
+            Default is ``0.0``.
+
+        el_low : float | ArrayLike, optional
+            The minimal elevation in degrees the telescope can be adjusted to.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
+            Default is ``0.0``.
+
+        el_high : float | ArrayLike, optional
+            The maximal elevation in degrees the telescope can be adjusted to.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
+            Default is ``90.0``.
+
+
+        rel_to_site : str | None, optional
+            The name of the site the coordinates are relative to.
+            Is ignored if `None` or empty.
+            Has to be an existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
+            Default is ``None``.
+        """
+
         root_path = Path(root_path)
         antennas = table(str(root_path / "ANTENNA"), ack=False)
 
@@ -773,7 +841,42 @@ class Layout:
         el_high: float | ArrayLike = 90.0,
         dish_dia: ArrayLike | None = None,
         rel_to_site: str | None = None,
-    ):
+    ) -> "Layout":
+        """Import a layout from a UV FITS file.
+
+        Parameters
+        ----------
+
+        path : PathLike
+            The path of the UV FITS file.
+
+        sefd : float | ArrayLike, optional
+            The system equivalent flux density of the telescope.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
+            Default is ``0.0``.
+
+        el_low : float | ArrayLike, optional
+            The minimal elevation in degrees the telescope can be adjusted to.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
+            Default is ``0.0``.
+
+        el_high : float | ArrayLike, optional
+            The maximal elevation in degrees the telescope can be adjusted to.
+            If provided as singular number all telescopes in the array will
+            be assigned the same value.
+            Default is ``90.0``.
+
+
+        rel_to_site : str | None, optional
+            The name of the site the coordinates are relative to.
+            Is ignored if `None` or empty.
+            Has to be an existing site for
+            :func:`astropy.coordinates.EarthLocation.of_site()`.
+            Default is ``None``.
+        """
+
         antennas = fits.open(path)[2].data
 
         read_dish_dia = dish_dia is None
@@ -853,8 +956,8 @@ class Layout:
 
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
-            Is ignored is `None` or empty or `fmt`. Has to be an
-            existing site for `astropy.coordinates.EarthLocation.of_site()`.
+            Is ignored is ``None`` or empty or ``fmt``. Has to be an
+            existing site for :func:`astropy.coordinates.EarthLocation.of_site()`.
             Default: None
         """
         instance = cls()
