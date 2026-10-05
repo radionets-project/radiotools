@@ -5,15 +5,19 @@ from itertools import combinations
 from os import PathLike
 from pathlib import Path
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy import units
+from astropy.constants import c
 from astropy.coordinates import EarthLocation
 from astropy.coordinates.earth import GeodeticLocation
 from astropy.io import fits
 from casacore.tables import table
 from numpy.typing import ArrayLike
+
+from radiotools.fiducial.fiducial import _configure_axes
 
 pd.options.display.float_format = "{:f}".format
 
@@ -88,19 +92,34 @@ class Layout:
 
         return connection_vecs.to_geodetic() if geodetic else connection_vecs
 
-    def get_max_resolution(self, frequency):
+    def get_min_resolution(self, frequency: float | units.Quantity) -> float:
         """
-        Returns the maximal resolution of the layout
-        at a given frequency in arcsec / px.
+        Returns the minimum angular resolution of the layout
+        at a specific frequency as determined by the Rayleigh criterion.
 
         Parameters
         ----------
         frequency : float or array_like
-            The frequency at which the array is observing
-        """
-        return 3600 * 180 / np.pi * 3 * 1e8 / (frequency * np.max(self.get_baselines()))
+            The frequency at which the array is observing.
+            If the frequency is not given as a quantity, it will be assumed
+            to be given in Hertz.
 
-    def get_station(self, name):
+        Returns
+        -------
+
+        units.Quantity:
+            The resulting angular resolution
+
+        """
+        frequency = (
+            frequency * units.Hertz
+            if not isinstance(frequency, units.Quantity)
+            else frequency.to(units.Hertz)
+        )
+        wavelength = c / frequency
+        return 1.22 * wavelength / (self.get_baselines().max() * units.meter)
+
+    def get_station(self, name: str) -> pd.Series:
         """Returns all information about the station
         with the given name as a `pandas.Series`.
 
@@ -112,7 +131,7 @@ class Layout:
 
         Returns
         -------
-        pd.Series
+        pd.Series :
             Pandas series containing all information
             about the given station.
         """
@@ -201,7 +220,7 @@ class Layout:
 
         return new_layout
 
-    def as_absolute(self):
+    def as_absolute(self) -> "Layout":
         """Returns a copy of the current layout in absolute
         coordinates. Requires the layout to be in relative
         coordinates.
@@ -233,21 +252,52 @@ class Layout:
 
     def plot_uv(
         self,
-        save_to_file="",
-        ref_frequency=None,
-        plot_args=None,
-        save_args=None,
-    ):
-        """Plots the uv-sampling (uv-plane) of the array.
+        ref_frequency: float | units.Quantity | None = None,
+        plot_args: dict | None = None,
+        save_to: PathLike | None = None,
+        save_args: dict | None = None,
+        fig_args: dict | None = None,
+        fig: matplotlib.figure.Figure | None = None,
+        ax: matplotlib.axes.Axes | None = None,
+    ) -> tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]:
+        """Plots the uv-sampling (uv-plane) of the array for a single time step
+        with a source at zenith above the array.
 
         Parameters
         ----------
-        save_to_file : str, optional
-            The name of the file the plot should be saved to.
-        plot_args : dict, optional
-            Arguments to pass to the axis.scatter function
-        save_args : dict, optional
-            Arguments to pass to the figure.savefig function
+
+        ref_frequency: float | units.Quantity | None = None
+            The reference frequency. This normalizes the baselines.
+            to the wavelength. If not given as a quantity, the frequency
+            is assumed to be in Hertz. Default is ``None``.
+
+        plot_args : dict | None, optional
+            Arguments to pass to the ``axis.scatter`` function.
+            Default is ``{}``.
+
+        save_to : str | None, optional
+            The name of the file to save the plot to.
+            Default is ``None``, meaning the plot won't be saved.
+
+        save_args : dict | None, optional
+            The additional arguments passed to the ``fig.savefig`` call.
+            Default is ``{"bbox_inches":"tight"}``.
+
+        fig_args : dict | None, optional
+            The additional arguments passed to the figure.
+            If a figure object is given in the ``fig`` parameter, this
+            value will be discarded.
+            Default is ``{}``.
+
+        fig : matplotlib.figure.Figure | None, optional
+            A custom figure object.
+            If set to ``None``, the ``ax`` parameter also has to be ``None``!
+            Default is ``None``.
+
+        ax : matplotlib.axes.Axes | None, optional
+            A custom axes object.
+            If set to ``None``, the ``fig`` parameter also has to be ``None``!
+            Default is ``None``.
         """
         if plot_args is None:
             plot_args = {"color": "royalblue", "alpha": 0.5}
@@ -259,6 +309,12 @@ class Layout:
 
         fig, ax = plt.subplots(1, 1, layout="constrained")
 
+        ref_frequency = (
+            ref_frequency * units.Hertz
+            if not isinstance(ref_frequency, units.Quantity)
+            else ref_frequency.to(units.Hertz)
+        )
+
         if ref_frequency is not None:
             baselines /= 3e8 / ref_frequency
 
@@ -266,63 +322,102 @@ class Layout:
         ax.set_xlabel("$u$ in m" if ref_frequency is None else "$u/\\lambda$")
         ax.set_ylabel("$v$ in m" if ref_frequency is None else "$v/\\lambda$")
 
-        if save_to_file != "":
-            fig.savefig(save_to_file, **save_args)
+        if save_to is not None:
+            fig.savefig(save_to, **save_args)
 
         return fig, ax
 
     def plot(
         self,
-        save_to_file="",
-        annotate=False,
-        limits=None,
-        plot_args=None,
-        save_args=None,
-    ):
+        show_names: bool = False,
+        plot_args: dict | None = None,
+        show_altitude: bool = True,
+        color: str = "#f54254",
+        cmap: str = "cividis",
+        save_to: PathLike | None = None,
+        save_args: dict | None = None,
+        fig_args: dict | None = None,
+        fig: matplotlib.figure.Figure | None = None,
+        ax: matplotlib.axes.Axes | None = None,
+    ) -> tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]:
         """Generates a plot of the arrangement of the layout.
 
         Parameters
         ----------
-        save_to_file : str, optional
-            The name of the file the plot should be saved to.
-        annotate : bool, optional
-            Whether to mark the stations with their respective names.
-        limits : tuple of tuples, optional
-            The x and y bounds (e.g. `((0,1), (0,1))`). Set tuple of one
-            axis (x or y) to None to only limit the other axis.
-        plot_args : dict, optional
-            Arguments to pass to the axis.scatter function
-        save_args : dict, optional
-            Arguments to pass to the figure.savefig function
-        """
-        if plot_args is None:
-            plot_args = {}
 
-        if save_args is None:
-            save_args = {}
+        show_title : bool, optional
+            Whether to mark the stations with their respective names.
+            Default is ``False``.
+
+        plot_args : dict | None, optional
+            Arguments to pass to the ``axis.scatter`` function.
+            Default is ``{}``.
+
+        show_altitude : bool, optional
+            Whether to show the altitude of the stations as
+            a color gradient. If all stations have the same altitude,
+            a singular color will be used.
+            Default is ``True``.
+
+        color : str, optional
+            Color of the points in case the altitude is not
+            shown as a gradient. Default is ``#f54254``.
+
+        cmap : str, optional
+            Colormap for the gradient display of the station altitudes.
+            Default is ``cividis``.
+
+        save_to : str | None, optional
+            The name of the file to save the plot to.
+            Default is ``None``, meaning the plot won't be saved.
+
+        save_args : dict | None, optional
+            The additional arguments passed to the ``fig.savefig`` call.
+            Default is ``{"bbox_inches":"tight"}``.
+
+        fig_args : dict | None, optional
+            The additional arguments passed to the figure.
+            If a figure object is given in the ``fig`` parameter, this
+            value will be discarded.
+            Default is ``{}``.
+
+        fig : matplotlib.figure.Figure | None, optional
+            A custom figure object.
+            If set to ``None``, the ``ax`` parameter also has to be ``None``!
+            Default is ``None``.
+
+        ax : matplotlib.axes.Axes | None, optional
+            A custom axes object.
+            If set to ``None``, the ``fig`` parameter also has to be ``None``!
+            Default is ``None``.
+
+        Returns
+        -------
+
+        tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]:
+            The figure and axes objects.
+        """
+
+        plot_args = {} if plot_args is None else plot_args
+        save_args = {"bbox_inches": "tight"} if save_args is None else save_args
+        fig_args = {} if fig_args is None else fig_args
 
         singular_alt = len(np.unique(self.altitude)) == 1
 
         options = {
-            "color": "#f54254" if singular_alt else None,
-            "cmap": "cividis" if not singular_alt else None,
+            "color": color if singular_alt else None,
+            "cmap": cmap if not singular_alt else None,
             "c": self.altitude if not singular_alt else None,
         }
 
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = _configure_axes(fig=fig, ax=ax, fig_args=fig_args)
 
         im = ax.scatter(self.x, self.y, **options, **plot_args)
-
-        if limits:
-            if limits[0]:
-                ax.set(xlim=limits[0])
-            if limits[1]:
-                ax.set(ylim=limits[1])
 
         if not singular_alt:
             fig.colorbar(im, ax=ax, label="Altitude")
 
-        if annotate:
+        if show_names:
             for _, row in self.get_dataframe().iterrows():
                 ax.annotate(
                     text=f"{row['station_name']}", xy=(row.x, row.y), fontsize=8
@@ -332,30 +427,40 @@ class Layout:
         ax.set_ylabel(f"{'Relative' if self.is_relative() else 'Geocentric'} $y$ in m")
         ax.set_box_aspect(1)
 
-        if save_to_file != "":
-            fig.savefig(save_to_file, **save_args)
+        if save_to is not None:
+            fig.savefig(save_to, **save_args)
 
         return fig, ax
 
-    def save(self, path, fmt="pyvisgen", overwrite=False, rel_to_site=None):
+    def save(
+        self,
+        path: PathLike,
+        fmt: str = "pyvisgen",
+        overwrite: bool = False,
+        rel_to_site: str | None = None,
+    ) -> None:
         """
         Saves the layout to a layout file.
 
         Parameters
         ----------
-        path : str
+        path : PathLike
             The path of the file to save the array layout to.
+
         fmt : str, optional
             The layout format the output file is supposed to have
-            (available: casa, pyvisgen) (default is pyvisgen).
+            (available: casa, pyvisgen). Default is ``pyvisgen``.
+
         overwrite : bool, optional
             Whether to overwrite the file if it already exists
-            (default is False).
+            Default is ``False``.
+
         rel_to_site : str, optional
             The name of the site the coordinates are supposed to be saved relative to.
             Is ignored if `None` or empty or `fmt` is not set to 'pyvisgen'.
             Has to be an existing site for
             :func:`astropy.coordinates.EarthLocation.of_site()`.
+            Default is ``None``.
         """
 
         FORMATS = ["casa", "pyvisgen"]
@@ -431,7 +536,7 @@ class Layout:
                     "station_name X Y Z dish_dia el_low el_high SEFD altitude\n"
                 )
 
-                for i in range(0, len(self.x)):
+                for i in range(len(self.x)):
                     row = map(
                         str,
                         [
@@ -455,7 +560,7 @@ class Layout:
 
                 data.append("# X Y Z dish_dia station_name\n")
 
-                for i in range(0, len(self.x)):
+                for i in range(len(self.x)):
                     row = map(
                         str,
                         [
@@ -479,31 +584,41 @@ class Layout:
 
     @classmethod
     def from_casa(
-        cls, cfg_path, el_low=15, el_high=85, sefd=0, altitude=0, rel_to_site=None
-    ):
+        cls,
+        cfg_path: PathLike,
+        el_low: float = 0.0,
+        el_high: float = 90.0,
+        sefd: float = 0.0,
+        rel_to_site=None,
+    ) -> "Layout":
         """
         Import a layout from a NRAO CASA layout config.
 
         Parameters
         ----------
-        cfg_path : str
+        cfg_path : PathLike
             The path of the config file to import.
+
         el_low : float or array_like, optional
             The minimal elevation in degrees the telescope can be adjusted to.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+
         el_high : float or array_like, optional
             The maximal elevation in degrees the telescope can be adjusted to.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+
         sefd : float or array_like, optional
             The system equivalent flux density of the telescope.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+
         altitude : float or array_like, optional
             The altitude of the telescope.
             If provided as singular number all telescopes in the array will
             be assigned the same value.
+
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored if `None` or empty.
@@ -526,24 +641,25 @@ class Layout:
             },
             comment="#",
         )
-        cls = cls()
-        cls.cfg_path = cfg_path
-        cls.rel_to_site = rel_to_site
-        cls.x = df["x"]
-        cls.y = df["y"]
-        cls.z = df["z"]
-        cls.dish_dia = df["dish_dia"]
-        cls.names = df["station_name"]
-        cls.el_low = np.repeat(el_low, len(cls.x)) if np.isscalar(el_low) else el_low
-        cls.el_high = (
-            np.repeat(el_high, len(cls.x)) if np.isscalar(el_high) else el_high
+        instance = cls()
+        instance.cfg_path = cfg_path
+        instance.rel_to_site = rel_to_site
+        instance.x = df["x"]
+        instance.y = df["y"]
+        instance.z = df["z"]
+        instance.dish_dia = df["dish_dia"]
+        instance.names = df["station_name"]
+        instance.el_low = (
+            np.repeat(el_low, len(instance.x)) if np.isscalar(el_low) else el_low
         )
-        cls.sefd = np.repeat(sefd, len(cls.x)) if np.isscalar(sefd) else sefd
-        cls.altitude = (
-            np.repeat(altitude, len(cls.x)) if np.isscalar(altitude) else altitude
+        instance.el_high = (
+            np.repeat(el_high, len(instance.x)) if np.isscalar(el_high) else el_high
         )
-
-        return cls
+        instance.sefd = np.repeat(sefd, len(instance.x)) if np.isscalar(sefd) else sefd
+        instance.altitude = (
+            instance.get_antenna_positions().height.to(units.meter).value
+        )
+        return instance
 
     @classmethod
     def from_pyvisgen(cls, cfg_path, rel_to_site=None):
@@ -579,20 +695,20 @@ class Layout:
         )
         df.columns = map(str.lower, df.columns)
 
-        cls = cls()
-        cls.names = df["station_name"]
-        cls.cfg_path = cfg_path
-        cls.rel_to_site = rel_to_site
-        cls.x = df["x"]
-        cls.y = df["y"]
-        cls.z = df["z"]
-        cls.dish_dia = df["dish_dia"]
-        cls.el_low = df["el_low"]
-        cls.el_high = df["el_high"]
-        cls.sefd = df["sefd"]
-        cls.altitude = df["altitude"]
+        instance = cls()
+        instance.names = df["station_name"]
+        instance.cfg_path = cfg_path
+        instance.rel_to_site = rel_to_site
+        instance.x = df["x"]
+        instance.y = df["y"]
+        instance.z = df["z"]
+        instance.dish_dia = df["dish_dia"]
+        instance.el_low = df["el_low"]
+        instance.el_high = df["el_high"]
+        instance.sefd = df["sefd"]
+        instance.altitude = df["altitude"]
 
-        return cls
+        return instance
 
     @classmethod
     def from_measurement_set(
@@ -734,26 +850,27 @@ class Layout:
         ----------
         df : pandas.DataFrame
             DateFrame containing the layout.
+
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored is `None` or empty or `fmt`. Has to be an
             existing site for `astropy.coordinates.EarthLocation.of_site()`.
             Default: None
         """
-        cls = cls()
-        cls.names = df["station_name"]
-        cls.cfg_path = "DataFrame"
-        cls.rel_to_site = rel_to_site
-        cls.x = df["x"]
-        cls.y = df["y"]
-        cls.z = df["z"]
-        cls.dish_dia = df["dish_dia"]
-        cls.el_low = df["el_low"]
-        cls.el_high = df["el_high"]
-        cls.sefd = df["sefd"]
-        cls.altitude = df["altitude"]
+        instance = cls()
+        instance.names = df["station_name"]
+        instance.cfg_path = "DataFrame"
+        instance.rel_to_site = rel_to_site
+        instance.x = df["x"]
+        instance.y = df["y"]
+        instance.z = df["z"]
+        instance.dish_dia = df["dish_dia"]
+        instance.el_low = df["el_low"]
+        instance.el_high = df["el_high"]
+        instance.sefd = df["sefd"]
+        instance.altitude = df["altitude"]
 
-        return cls
+        return instance
 
     @classmethod
     def from_url(cls, url: str, rel_to_site: str | None = None) -> "Layout":
@@ -763,6 +880,7 @@ class Layout:
         ----------
         url : str
             URL of the layout file.
+
         rel_to_site : str, optional
             The name of the site the coordinates are relative to.
             Is ignored if `None` or empty. Has to be an
@@ -790,20 +908,20 @@ class Layout:
             }
         )
 
-        cls = cls()
-        cls.names = df["station_name"]
-        cls.cfg_path = url
-        cls.rel_to_site = rel_to_site
-        cls.x = df["x"]
-        cls.y = df["y"]
-        cls.z = df["z"]
-        cls.dish_dia = df["dish_dia"]
-        cls.el_low = df["el_low"]
-        cls.el_high = df["el_high"]
-        cls.sefd = df["sefd"]
-        cls.altitude = df["altitude"]
+        instance = cls()
+        instance.names = df["station_name"]
+        instance.cfg_path = url
+        instance.rel_to_site = rel_to_site
+        instance.x = df["x"]
+        instance.y = df["y"]
+        instance.z = df["z"]
+        instance.dish_dia = df["dish_dia"]
+        instance.el_low = df["el_low"]
+        instance.el_high = df["el_high"]
+        instance.sefd = df["sefd"]
+        instance.altitude = df["altitude"]
 
-        return cls
+        return instance
 
 
 def loc2itrf(cx, cy, cz, locx=0.0, locy=0.0, locz=0.0):
@@ -876,7 +994,7 @@ def itrf2loc(x, y, z, cx, cy, cz):
         The center's z-coordinate in WGS84 coordinates
     """
 
-    clon, clat, h = geocentric2geodetic(cx, cy, cz)
+    clon, clat, _ = geocentric2geodetic(cx, cy, cz)
 
     ccoslon = np.cos(clon)
     csinlon = np.sin(clon)
@@ -935,7 +1053,7 @@ def geocentric2geodetic(x, y, z):
         alt = alt.value
     else:
         lon, lat, alt = np.array([]), np.array([]), np.array([])
-        for i in range(0, len(x)):
+        for i in range(len(x)):
             loc = EarthLocation.from_geocentric(x[i], y[i], z[i], "m")
             lon = np.append(lon, loc.lon.deg)
             lat = np.append(lat, loc.lon.deg)
@@ -967,7 +1085,7 @@ def geodetic2geocentric(lon, lat, alt):
         z = z.value
     else:
         x, y, z = np.array([]), np.array([]), np.array([])
-        for i in range(0, len(lon)):
+        for i in range(len(lon)):
             loc = EarthLocation.from_geodetic(lon=lon[i], lat=lat[i], height=alt[i])
             x = np.append(x, loc.x.value)
             y = np.append(y, loc.y.value)
