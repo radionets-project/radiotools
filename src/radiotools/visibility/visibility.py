@@ -411,7 +411,7 @@ class SourceVisibility:
         return max(0, delta)
 
     def get_optimal_date(self, print_result: bool = False) -> list:
-        """Computes the best date to observe the target source.
+        r"""Computes the best date to observe the target source.
         Returns a list of three :class:`~pandas.Timestamp` where the
         first and last are the best date :math:`\pm` `obs_length / 2`.
 
@@ -470,7 +470,7 @@ class SourceVisibility:
         result = times[int(np.argmax(dt.sum(axis=0)))]
 
         if print_result:
-            print("")
+            print()
             tab = Table(title="*** Best observation time ***")
             tab.add_column("Station ID", justify="right", style="cyan")
             tab.add_column("Obs. time start")
@@ -485,6 +485,6 @@ class SourceVisibility:
             )
             console = Console()
             console.print(tab)
-            print("")
+            print()
 
         return result
